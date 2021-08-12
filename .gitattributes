@@ -1,0 +1,2 @@
+*.cs diff=csharp
+*.sh text eol=lf
