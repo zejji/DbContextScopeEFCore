@@ -171,7 +171,7 @@ namespace Zejji.Entity
                     var stateInCurrentScope = contextInCurrentScope.Entry(toRefresh);
                     if (stateInCurrentScope != null)
                     {
-                        var entityType = stateInCurrentScope.Metadata?.GetType();
+                        var entityType = stateInCurrentScope.Metadata?.ClrType;
 
                         if (entityType == null)
                         {
