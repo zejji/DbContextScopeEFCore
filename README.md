@@ -18,7 +18,7 @@ In summary, the library addresses the problem that injecting `DbContext` instanc
 
 The `DbContextScope` library allows users to create scopes which control the lifetime of ambient `DbContext` instances, as well giving control over the exact time at which changes are saved.
 
-For general usage instructions, see the original Github repository and article referred to above.
+For general usage instructions, see the original Github repository and article referred to above. Please note the `Mehdime.Entity` namespace has been renamed to `Zejji.Entity`.
 
 The new `RegisteredDbContextFactory` class can be used as follows:
 
