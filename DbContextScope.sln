@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31606.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContextScope", "DbContextScope\DbContextScope.csproj", "{B92E2199-7510-437C-9323-CA9BE5AED5EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbContextScope", "DbContextScope\DbContextScope.csproj", "{B92E2199-7510-437C-9323-CA9BE5AED5EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContextScope.Tests", "DbContextScope.Tests\DbContextScope.Tests.csproj", "{DB82934C-1865-4AC3-86DD-97283B57E910}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbContextScope.Tests", "DbContextScope.Tests\DbContextScope.Tests.csproj", "{DB82934C-1865-4AC3-86DD-97283B57E910}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{992386FA-C20A-4CB2-B017-6351206426AE}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		global.json = global.json
+		LICENSE.md = LICENSE.md
+		README.md = README.md
 		stylecop.json = stylecop.json
 	EndProjectSection
 EndProject
