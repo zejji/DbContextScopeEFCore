@@ -7,7 +7,7 @@ using Zejji.Entity;
 
 namespace DbContextScope.Tests
 {
-    public class RegisteredDbContextFactoryTests
+    public sealed class RegisteredDbContextFactoryTests : IDisposable
     {
         private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
         private readonly RegisteredDbContextFactory _dbContextFactory;
@@ -18,6 +18,11 @@ namespace DbContextScope.Tests
             _databaseManager = new SqliteMemoryDatabaseLifetimeManager();
 
             _dbContextFactory = new RegisteredDbContextFactory();
+        }
+
+        public void Dispose()
+        {
+            _databaseManager.Dispose();
         }
 
         [Fact]

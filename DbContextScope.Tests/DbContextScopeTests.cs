@@ -7,7 +7,7 @@ using Xunit;
 using Zejji.Entity;
 
 namespace DbContextScope.Tests;
-public class DbContextScopeTests : IDisposable
+public sealed class DbContextScopeTests : IDisposable
 {
     private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
     private readonly IDbContextFactory _dbContextFactory;
