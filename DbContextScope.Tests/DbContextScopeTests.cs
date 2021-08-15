@@ -24,7 +24,7 @@ public class DbContextScopeTests : IDisposable
         _dbContextScopeFactory = new DbContextScopeFactory(_dbContextFactory);
 
         // Ensure the database is created
-        using (var dbContext =  _dbContextFactory.CreateDbContext<TestDbContext>())
+        using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
         {
             dbContext.Database.EnsureCreated();
         }
@@ -66,7 +66,7 @@ public class DbContextScopeTests : IDisposable
             dbContext.Users.Add(new User { Name = originalName });
             dbContext.SaveChanges();
         }
-        
+
         // Act - create nested DbContextScopes and attempt to save on the inner scope
         using (var outerDbContextScope = _dbContextScopeFactory.Create())
         {
@@ -136,7 +136,7 @@ public class DbContextScopeTests : IDisposable
         using (var dbContextScope = _dbContextScopeFactory.Create())
         {
             var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
-            
+
             var contextLocator = new AmbientDbContextLocator();
             var ambientDbContext = contextLocator.Get<TestDbContext>();
 
