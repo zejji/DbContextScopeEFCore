@@ -118,6 +118,100 @@ public class DbContextScopeTests : IDisposable
     }
 
     [Fact]
+    public void Changes_can_only_be_saved_once_on_a_DbContextScope()
+    {
+        using (var dbContextScope = _dbContextScopeFactory.Create())
+        {
+            var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
+            
+            // Arrange - add a user and call SaveChanges once
+            dbContext.Users.Add(new User { Name = "Test User" });
+            dbContextScope.SaveChanges();
+
+            // Act - call SaveChanges again
+            var ex = Record.Exception(() => dbContextScope.SaveChanges());
+
+            // Assert - an InvalidOperationException should have been thrown
+            ex.Should().NotBeNull();
+            ex.Should().BeOfType<InvalidOperationException>();
+        }
+    }
+
+    [Fact]
+    public void SaveChanges_can_be_called_again_after_a_DbUpdateConcurrencyException()
+    {
+        var originalName = "Test User";
+        var newName1 = "New name 1";
+        var newName2 = "New name 2";
+
+        // Arrange - add one user to the database
+        using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
+        {
+            dbContext.Users.Add(new User { Name = originalName });
+            dbContext.SaveChanges();
+        }
+
+        // Act
+        var concurrencyExceptionThrown = false;
+
+        using (var dbContextScope = _dbContextScopeFactory.Create())
+        {
+            var dbContext1 = dbContextScope.DbContexts.Get<TestDbContext>();
+            var user = dbContext1.Users.Single();
+
+            // Change the user's name in a separate DbContext to cause a DbUpdateConcurrencyException
+            var dbContext2 = _dbContextFactory.CreateDbContext<TestDbContext>();
+            var userFromNewContext = dbContext2.Users.Single();
+            userFromNewContext.Name = newName1;
+            dbContext2.SaveChanges();
+
+            // Make a different change so we can save it on the DbContext obtained from the DbContextScope
+            user.Name = newName2;
+
+            // Call SaveChanges on the DbContextScope and handle any DbUpdateConcurrencyExceptions
+            var saved = false;
+
+            while (!saved)
+            {
+                try
+                {
+                    // Attempt to save changes to the database
+                    dbContextScope.SaveChanges();
+                    saved = true;
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    concurrencyExceptionThrown = true;
+
+                    foreach (var entry in ex.Entries)
+                    {
+                        var databaseValues = entry.GetDatabaseValues();
+
+                        if (databaseValues == null)
+                        {
+                            throw new InvalidOperationException($"Unexpected error - {databaseValues} should never be null here.");
+                        }
+
+                        // Don't make any changes to the entry's CurrentValues, which effectively
+                        // means "latest save wins"
+
+                        // Refresh entry's OriginalValues property so we don't fail the next concurrency check
+                        entry.OriginalValues.SetValues(databaseValues);
+                    }
+                }
+            }
+        }
+
+        // Assert
+        concurrencyExceptionThrown.Should().Be(true);
+        using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
+        {
+            var user = dbContext.Users.Single();
+            user.Name.Should().Be(newName2);
+        }
+    }
+
+    [Fact]
     public void IDbContextReadOnlyScope_should_not_have_SaveChanges_method()
     {
         using (var dbContextScope = _dbContextScopeFactory.CreateReadOnly())

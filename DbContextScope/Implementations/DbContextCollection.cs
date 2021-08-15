@@ -116,6 +116,7 @@ namespace Zejji.Entity
                     {
                         tran.Commit();
                         tran.Dispose();
+                        _transactions.Remove(dbContext);
                     }
                 }
                 catch (Exception e)
@@ -124,11 +125,10 @@ namespace Zejji.Entity
                 }
             }
 
-            _transactions.Clear();
-            _completed = true;
-
             if (lastError != null)
                 lastError.Throw(); // Re-throw while maintaining the exception's original stack track
+            else
+                _completed = true;
 
             return c;
         }
@@ -165,6 +165,7 @@ namespace Zejji.Entity
                     {
                         tran.Commit();
                         tran.Dispose();
+                        _transactions.Remove(dbContext);
                     }
                 }
                 catch (Exception e)
@@ -173,11 +174,10 @@ namespace Zejji.Entity
                 }
             }
 
-            _transactions.Clear();
-            _completed = true;
-
             if (lastError != null)
                 lastError.Throw(); // Re-throw while maintaining the exception's original stack track
+            else
+                _completed = true;
 
             return c;
         }

@@ -6,6 +6,7 @@ This package is based on the original [DbContextScope repository](https://github
 
 - updated for .NET 6 and EF Core 6;
 - added fix for `RefreshEntitiesInParentScope` method so that it works correctly for entities with composite primary keys;
+- added fix for `DbContextCollection`'s `Commit` and `CommitAsync` methods so that `SaveChanges` can be called more than once if there is a `DbUpdateConcurrencyException` (see [this](https://github.com/mehdime/DbContextScope/pull/31) unmerged pull request in the original `DbContextScope` repository);
 - added the `RegisteredDbContextFactory` class as a concrete implementation of the `IDbContextFactory` interface, which allows users to register factory functions for one or more `DbContext` type(s); and
 - added unit tests.
 
