@@ -48,11 +48,11 @@ See also the unit tests for `RegisteredDbContextFactory` [here](./DbContextScope
 
 ### Installing
 
-- `dotnet add package Zejji.DbContextScopeEFCore6`
+- `dotnet add package Zejji.DbContextScope.EFCore6`
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details
+This project is licensed under the MIT License - see the [LICENSE.txt](./DbContextScope/LICENSE.txt) file for details
 
 ## Acknowledgments
 
