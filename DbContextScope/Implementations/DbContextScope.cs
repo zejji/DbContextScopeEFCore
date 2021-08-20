@@ -61,7 +61,7 @@ namespace Zejji.Entity
             if (_completed)
                 throw new InvalidOperationException($"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction.");
 
-            // Only save changes if we're not a nested scope. Otherwise, let the top-level scope 
+            // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
             var c = 0;
             if (!_nested)
@@ -86,7 +86,7 @@ namespace Zejji.Entity
             if (_completed)
                 throw new InvalidOperationException($"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction.");
 
-            // Only save changes if we're not a nested scope. Otherwise, let the top-level scope 
+            // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
             var c = 0;
             if (!_nested)
@@ -160,12 +160,12 @@ namespace Zejji.Entity
                 if (correspondingParentContext == null)
                     continue; // No DbContext of this type has been created in the parent scope yet. So no need to refresh anything for this DbContext type.
 
-                // Both our scope and the parent scope have an instance of the same DbContext type. 
+                // Both our scope and the parent scope have an instance of the same DbContext type.
                 // We can now look in the parent DbContext instance for entities that need to
                 // be refreshed.
                 foreach (var toRefresh in entities)
                 {
-                    // First, we need to find what the primary key for this entity is. 
+                    // First, we need to find what the primary key for this entity is.
                     // We need this in order to check if this entity has already
                     // been loaded in the parent DbContext's first-level cache.
                     var stateInCurrentScope = contextInCurrentScope.Entry(toRefresh);
@@ -271,33 +271,33 @@ namespace Zejji.Entity
                      * someone started a parallel flow of execution and forgot to suppress the
                      * ambient context before doing so. And we've been created in that parallel flow.
                      * 
-                     * Since the CallContext flows through all async points, the ambient scope in the 
+                     * Since the CallContext flows through all async points, the ambient scope in the
                      * main flow of execution ended up becoming the ambient scope in this parallel flow
-                     * of execution as well. So when we were created, we captured it as our "parent scope". 
-                     * 
-                     * The main flow of execution then completed while our flow was still ongoing. When 
-                     * the main flow of execution completed, the ambient scope there (which we think is our 
+                     * of execution as well. So when we were created, we captured it as our "parent scope".
+                     *
+                     * The main flow of execution then completed while our flow was still ongoing. When
+                     * the main flow of execution completed, the ambient scope there (which we think is our
                      * parent scope) got disposed of as it should.
-                     * 
+                     *
                      * So here we are: our parent scope isn't actually our parent scope. It was the ambient
-                     * scope in the main flow of execution from which we branched off. We should never have seen 
+                     * scope in the main flow of execution from which we branched off. We should never have seen
                      * it. Whoever wrote the code that created this parallel task should have suppressed
                      * the ambient context before creating the task - that way we wouldn't have captured
                      * this bogus parent scope.
-                     * 
-                     * While this is definitely a programming error, it's not worth throwing here. We can only 
+                     *
+                     * While this is definitely a programming error, it's not worth throwing here. We can only
                      * be in one of two scenario:
-                     * 
-                     * - If the developer who created the parallel task was mindful to force the creation of 
-                     * a new scope in the parallel task (with IDbContextScopeFactory.CreateNew() instead of 
+                     *
+                     * - If the developer who created the parallel task was mindful to force the creation of
+                     * a new scope in the parallel task (with IDbContextScopeFactory.CreateNew() instead of
                      * JoinOrCreate()) then no harm has been done. We haven't tried to access the same DbContext
                      * instance from multiple threads.
-                     * 
+                     *
                      * - If this was not the case, they probably already got an exception complaining about the same
                      * DbContext or ObjectContext being accessed from multiple threads simultaneously (or a related
                      * error like multiple active result sets on a DataReader, which is caused by attempting to execute
                      * several queries in parallel on the same DbContext instance). So the code has already blown up.
-                     * 
+                     *
                      * So just record a warning here. Hopefully someone will see it and will fix the code.
                      */
 
@@ -327,81 +327,81 @@ Stack Trace:
 
         /*
          * This is where all the magic happens. And there is not much of it.
-         * 
+         *
          * This implementation is inspired by the source code of the
          * TransactionScope class in .NET 4.5.1 (the TransactionScope class
          * is prior versions of the .NET Fx didn't have support for async
          * operations).
-         * 
+         *
          * In order to understand this, you'll need to be familiar with the
          * concept of async points. You'll also need to be familiar with the
-         * ExecutionContext and CallContext and understand how and why they 
+         * ExecutionContext and CallContext and understand how and why they
          * flow through async points. Stephen Toub has written an
          * excellent blog post about this - it's a highly recommended read:
          * https://devblogs.microsoft.com/pfxteam/executioncontext-vs-synchronizationcontext/
-         * 
-         * Overview: 
-         * 
-         * We want our DbContextScope instances to be ambient within 
-         * the context of a logical flow of execution. This flow may be 
+         *
+         * Overview:
+         *
+         * We want our DbContextScope instances to be ambient within
+         * the context of a logical flow of execution. This flow may be
          * synchronous or it may be asynchronous.
-         * 
-         * If we only wanted to support the synchronous flow scenario, 
-         * we could just store our DbContextScope instances in a ThreadStatic 
+         *
+         * If we only wanted to support the synchronous flow scenario,
+         * we could just store our DbContextScope instances in a ThreadStatic
          * variable. That's the "traditional" (i.e. pre-async) way of implementing
-         * an ambient context in .NET. You can see an example implementation of 
+         * an ambient context in .NET. You can see an example implementation of
          * a TheadStatic-based ambient DbContext here: http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/ 
-         * 
+         *
          * But that would be hugely limiting as it would prevent us from being
          * able to use the new async features added to Entity Framework
          * in EF6 and .NET 4.5.
-         * 
-         * So we need a storage place for our DbContextScope instances 
-         * that can flow through async points so that the ambient context is still 
-         * available after an await (or any other async point). And this is exactly 
+         *
+         * So we need a storage place for our DbContextScope instances
+         * that can flow through async points so that the ambient context is still
+         * available after an await (or any other async point). And this is exactly
          * what CallContext is for.
-         * 
-         * There are however two issues with storing our DbContextScope instances 
+         *
+         * There are however two issues with storing our DbContextScope instances
          * in the CallContext:
-         * 
+         *
          * 1) Items stored in the CallContext should be serializable. That's because
-         * the CallContext flows not just through async points but also through app domain 
+         * the CallContext flows not just through async points but also through app domain
          * boundaries. I.e. if you make a remoting call into another app domain, the
          * CallContext will flow through this call (which will require all the values it
          * stores to get serialized) and get restored in the other app domain.
-         * 
+         *
          * In our case, our DbContextScope instances aren't serializable. And in any case,
          * we most definitely don't want them to be flown accross app domains. So we'll
          * use the trick used by the TransactionScope class to work around this issue.
          * Instead of storing our DbContextScope instances themselves in the CallContext,
-         * we'll just generate a unique key for each instance and only store that key in 
+         * we'll just generate a unique key for each instance and only store that key in
          * the CallContext. We'll then store the actual DbContextScope instances in a static
-         * Dictionary against their key. 
-         * 
+         * Dictionary against their key.
+         *
          * That way, if an app domain boundary is crossed, the keys will be flown accross
-         * but not the DbContextScope instances since a static variable is stored at the 
+         * but not the DbContextScope instances since a static variable is stored at the
          * app domain level. The code executing in the other app domain won't see the ambient
          * DbContextScope created in the first app domain and will therefore be able to create
          * their own ambient DbContextScope if necessary.
-         * 
+         *
          * 2) The CallContext flows through *all* async points. This means that if someone
          * decides to create multiple threads within the scope of a DbContextScope, our ambient scope
-         * will flow through all the threads. Which means that all the threads will see that single 
-         * DbContextScope instance as being their ambient DbContext. So clients need to be 
+         * will flow through all the threads. Which means that all the threads will see that single
+         * DbContextScope instance as being their ambient DbContext. So clients need to be
          * careful to always suppress the ambient context before kicking off a parallel operation
          * to avoid our DbContext instances from being accessed from multiple threads.
          */
 
         private static readonly string AmbientDbContextScopeKey = "AmbientDbcontext_" + Guid.NewGuid();
 
-        // Use a ConditionalWeakTable instead of a simple ConcurrentDictionary to store our DbContextScope instances 
+        // Use a ConditionalWeakTable instead of a simple ConcurrentDictionary to store our DbContextScope instances
         // in order to prevent leaking DbContextScope instances if someone doesn't dispose them properly.
         //
-        // For example, if we used a ConcurrentDictionary and someone let go of a DbContextScope instance without 
+        // For example, if we used a ConcurrentDictionary and someone let go of a DbContextScope instance without
         // disposing it, our ConcurrentDictionary would still have a reference to it, preventing
         // the GC from being able to collect it => leak. With a ConditionalWeakTable, we don't hold a reference
         // to the DbContextScope instances we store in there, allowing them to get GCed.
-        // The doc for ConditionalWeakTable isn't the best. This SO anser does a good job at explaining what 
+        // The doc for ConditionalWeakTable isn't the best. This SO anser does a good job at explaining what
         // it does: http://stackoverflow.com/a/18613811
         private static readonly ConditionalWeakTable<InstanceIdentifier, DbContextScope> DbContextScopeInstances = new ConditionalWeakTable<InstanceIdentifier, DbContextScope>();
 
@@ -428,7 +428,7 @@ Stack Trace:
         }
 
         /// <summary>
-        /// Clears the ambient scope from the CallContext and stops tracking its instance. 
+        /// Clears the ambient scope from the CallContext and stops tracking its instance.
         /// Call this when a DbContextScope is being disposed.
         /// </summary>
         internal static void RemoveAmbientScope()
@@ -444,7 +444,7 @@ Stack Trace:
         }
 
         /// <summary>
-        /// Clears the ambient scope from the CallContext but keeps tracking its instance. Call this to temporarily 
+        /// Clears the ambient scope from the CallContext but keeps tracking its instance. Call this to temporarily
         /// hide the ambient context (e.g. to prevent it from being captured by parallel task).
         /// </summary>
         internal static void HideAmbientScope()
@@ -470,15 +470,15 @@ Stack Trace:
             // We have an instance identifier in the CallContext but no corresponding instance
             // in our DbContextScopeInstances table. This should never happen! The only place where
             // we remove the instance from the DbContextScopeInstances table is in RemoveAmbientScope(),
-            // which also removes the instance identifier from the CallContext. 
+            // which also removes the instance identifier from the CallContext.
             //
-            // There's only one scenario where this could happen: someone let go of a DbContextScope 
+            // There's only one scenario where this could happen: someone let go of a DbContextScope
             // instance without disposing it. In that case, the CallContext
             // would still contain a reference to the scope and we'd still have that scope's instance
-            // in our DbContextScopeInstances table. But since we use a ConditionalWeakTable to store 
-            // our DbContextScope instances and are therefore only holding a weak reference to these instances, 
+            // in our DbContextScopeInstances table. But since we use a ConditionalWeakTable to store
+            // our DbContextScope instances and are therefore only holding a weak reference to these instances,
             // the GC would be able to collect it. Once collected by the GC, our ConditionalWeakTable will return
-            // null when queried for that instance. In that case, we're OK. This is a programming error 
+            // null when queried for that instance. In that case, we're OK. This is a programming error
             // but our use of a ConditionalWeakTable prevented a leak.
             System.Diagnostics.Debug.WriteLine($"Programming error detected. Found a reference to an ambient {nameof(DbContextScope)} in the {nameof(CallContext)} but didn't have an instance for it in our {nameof(DbContextScopeInstances)} table. This most likely means that this {nameof(DbContextScope)} instance wasn't disposed of properly. {nameof(DbContextScope)} instances must always be disposed. Review the code for any {nameof(DbContextScope)} instance used outside of a 'using' block and fix it so that all {nameof(DbContextScope)} instances are disposed of.");
             return null;
@@ -488,7 +488,7 @@ Stack Trace:
     }
 
     /*
-     * The idea of using an object reference as our instance identifier 
+     * The idea of using an object reference as our instance identifier
      * instead of simply using a unique string (which we could have generated
      * with Guid.NewGuid() for example) comes from the TransactionScope
      * class. As far as I can make out, a string would have worked just fine.

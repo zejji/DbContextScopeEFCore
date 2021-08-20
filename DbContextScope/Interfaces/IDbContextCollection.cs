@@ -8,7 +8,7 @@ namespace Zejji.Entity
     public interface IDbContextCollection : IDisposable
     {
         /// <summary>
-        /// Get or create a DbContext instance of the specified type. 
+        /// Get or create a DbContext instance of the specified type.
         /// </summary>
 		TDbContext Get<TDbContext>() where TDbContext : DbContext;
     }

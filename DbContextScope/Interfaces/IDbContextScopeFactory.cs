@@ -69,13 +69,13 @@ namespace Zejji.Entity
         IDbContextReadOnlyScope CreateReadOnlyWithTransaction(IsolationLevel isolationLevel);
 
         /// <summary>
-        /// Temporarily suppresses the ambient DbContextScope. 
-        /// 
-        /// Always use this if you need to  kick off parallel tasks within a DbContextScope. 
+        /// Temporarily suppresses the ambient DbContextScope.
+        ///
+        /// Always use this if you need to  kick off parallel tasks within a DbContextScope.
         /// This will prevent the parallel tasks from using the current ambient scope. If you
         /// were to kick off parallel tasks within a DbContextScope without suppressing the ambient
-        /// context first, all the parallel tasks would end up using the same ambient DbContextScope, which 
-        /// would result in multiple threads accesssing the same DbContext instances at the same 
+        /// context first, all the parallel tasks would end up using the same ambient DbContextScope, which
+        /// would result in multiple threads accesssing the same DbContext instances at the same
         /// time.
         /// </summary>
         IDisposable SuppressAmbientContext();

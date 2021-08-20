@@ -7,7 +7,7 @@ namespace Zejji.Entity
 {
     /// <summary>
     /// As its name suggests, DbContextCollection maintains a collection of DbContext instances.
-    /// 
+    ///
     /// What it does in a nutshell:
     /// - Lazily instantiates DbContext instances when its Get Of TDbContext () method is called
     /// (and optionally starts an explicit database transaction).
@@ -15,7 +15,7 @@ namespace Zejji.Entity
     /// instance when asked for a DbContext of a specific type.
     /// - Takes care of committing / rolling back changes and transactions on all the DbContext
     /// instances it created when its Commit() or Rollback() method is called.
-    /// 
+    ///
     /// </summary>
     public class DbContextCollection : IDbContextCollection
     {
@@ -81,21 +81,21 @@ namespace Zejji.Entity
             if (_completed)
                 throw new InvalidOperationException($"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there.");
 
-            // Best effort. You'll note that we're not actually implementing an atomic commit 
+            // Best effort. You'll note that we're not actually implementing an atomic commit
             // here. It entirely possible that one DbContext instance will be committed successfully
             // and another will fail. Implementing an atomic commit would require us to wrap
-            // all of this in a TransactionScope. The problem with TransactionScope is that 
-            // the database transaction it creates may be automatically promoted to a 
-            // distributed transaction if our DbContext instances happen to be using different 
+            // all of this in a TransactionScope. The problem with TransactionScope is that
+            // the database transaction it creates may be automatically promoted to a
+            // distributed transaction if our DbContext instances happen to be using different
             // databases. And that would require the DTC service (Distributed Transaction Coordinator)
             // to be enabled on all of our live and dev servers as well as on all of our dev workstations.
-            // Otherwise the whole thing would blow up at runtime. 
+            // Otherwise the whole thing would blow up at runtime.
 
             // In practice, if our services are implemented following a reasonably DDD approach,
             // a business transaction (i.e. a service method) should only modify entities in a single
             // DbContext. So we should never find ourselves in a situation where two DbContext instances
             // contain uncommitted changes here. We should therefore never be in a situation where the below
-            // would result in a partial commit. 
+            // would result in a partial commit.
 
             ExceptionDispatchInfo? lastError = null;
 
@@ -196,7 +196,7 @@ namespace Zejji.Entity
                 // There's no need to explicitly rollback changes in a DbContext as
                 // DbContext doesn't save any changes until its SaveChanges() method is called.
                 // So "rolling back" for a DbContext simply means not calling its SaveChanges()
-                // method. 
+                // method.
 
                 // But if we've started an explicit database transaction, then we must roll it back.
                 var tran = GetValueOrDefault(_transactions, dbContext);
@@ -260,7 +260,7 @@ namespace Zejji.Entity
         }
 
         /// <summary>
-        /// Returns the value associated with the specified key or the default 
+        /// Returns the value associated with the specified key or the default
         /// value for the TValue  type.
         /// </summary>
         private static TValue? GetValueOrDefault<TKey, TValue>(IDictionary<TKey, TValue> dictionary, TKey key)
