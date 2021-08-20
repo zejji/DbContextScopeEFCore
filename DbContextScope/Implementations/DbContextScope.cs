@@ -270,8 +270,8 @@ namespace Zejji.Entity
                      * If our parent scope has been disposed before us, it can only mean one thing:
                      * someone started a parallel flow of execution and forgot to suppress the
                      * ambient context before doing so. And we've been created in that parallel flow.
-                     * 
-                     * Since the CallContext flows through all async points, the ambient scope in the
+                     *
+                     * Since the AsyncLocal flows through all async points, the ambient scope in the
                      * main flow of execution ended up becoming the ambient scope in this parallel flow
                      * of execution as well. So when we were created, we captured it as our "parent scope".
                      *
@@ -335,7 +335,7 @@ Stack Trace:
          *
          * In order to understand this, you'll need to be familiar with the
          * concept of async points. You'll also need to be familiar with the
-         * ExecutionContext and CallContext and understand how and why they
+         * ExecutionContext and AsyncLocal and understand how and why they
          * flow through async points. Stephen Toub has written an
          * excellent blog post about this - it's a highly recommended read:
          * https://devblogs.microsoft.com/pfxteam/executioncontext-vs-synchronizationcontext/
@@ -359,32 +359,10 @@ Stack Trace:
          * So we need a storage place for our DbContextScope instances
          * that can flow through async points so that the ambient context is still
          * available after an await (or any other async point). And this is exactly
-         * what CallContext is for.
+         * what AsyncLocal is for.
          *
-         * There are however two issues with storing our DbContextScope instances
-         * in the CallContext:
-         *
-         * 1) Items stored in the CallContext should be serializable. That's because
-         * the CallContext flows not just through async points but also through app domain
-         * boundaries. I.e. if you make a remoting call into another app domain, the
-         * CallContext will flow through this call (which will require all the values it
-         * stores to get serialized) and get restored in the other app domain.
-         *
-         * In our case, our DbContextScope instances aren't serializable. And in any case,
-         * we most definitely don't want them to be flown accross app domains. So we'll
-         * use the trick used by the TransactionScope class to work around this issue.
-         * Instead of storing our DbContextScope instances themselves in the CallContext,
-         * we'll just generate a unique key for each instance and only store that key in
-         * the CallContext. We'll then store the actual DbContextScope instances in a static
-         * Dictionary against their key.
-         *
-         * That way, if an app domain boundary is crossed, the keys will be flown accross
-         * but not the DbContextScope instances since a static variable is stored at the
-         * app domain level. The code executing in the other app domain won't see the ambient
-         * DbContextScope created in the first app domain and will therefore be able to create
-         * their own ambient DbContextScope if necessary.
-         *
-         * 2) The CallContext flows through *all* async points. This means that if someone
+         * There is however an issue with storing our DbContextScope instances in the AsyncLocal
+         * - the AsyncLocal flows through *all* async points. This means that if someone
          * decides to create multiple threads within the scope of a DbContextScope, our ambient scope
          * will flow through all the threads. Which means that all the threads will see that single
          * DbContextScope instance as being their ambient DbContext. So clients need to be
@@ -392,7 +370,7 @@ Stack Trace:
          * to avoid our DbContext instances from being accessed from multiple threads.
          */
 
-        private static readonly string AmbientDbContextScopeKey = "AmbientDbcontext_" + Guid.NewGuid();
+        private static readonly AsyncLocal<InstanceIdentifier?> AmbientDbContextScopeIdentifier = new();
 
         // Use a ConditionalWeakTable instead of a simple ConcurrentDictionary to store our DbContextScope instances
         // in order to prevent leaking DbContextScope instances if someone doesn't dispose them properly.
@@ -408,33 +386,33 @@ Stack Trace:
         private readonly InstanceIdentifier _instanceIdentifier = new InstanceIdentifier();
 
         /// <summary>
-        /// Makes the provided 'dbContextScope' available as the the ambient scope via the CallContext.
+        /// Makes the provided 'dbContextScope' available as the the ambient scope via the AsyncLocal.
         /// </summary>
         internal static void SetAmbientScope(DbContextScope newAmbientScope)
         {
             if (newAmbientScope == null)
                 throw new ArgumentNullException(nameof(newAmbientScope));
 
-            var current = CallContext.LogicalGetData(AmbientDbContextScopeKey) as InstanceIdentifier;
+            var current = AmbientDbContextScopeIdentifier.Value;
 
             if (current == newAmbientScope._instanceIdentifier)
                 return;
 
-            // Store the new scope's instance identifier in the CallContext, making it the ambient scope
-            CallContext.LogicalSetData(AmbientDbContextScopeKey, newAmbientScope._instanceIdentifier);
+            // Store the new scope's instance identifier in the AsyncLocal, making it the ambient scope
+            AmbientDbContextScopeIdentifier.Value = newAmbientScope._instanceIdentifier;
 
             // Keep track of this instance (or do nothing if we're already tracking it)
             DbContextScopeInstances.GetValue(newAmbientScope._instanceIdentifier, key => newAmbientScope);
         }
 
         /// <summary>
-        /// Clears the ambient scope from the CallContext and stops tracking its instance.
+        /// Clears the ambient scope from the AsyncLocal and stops tracking its instance.
         /// Call this when a DbContextScope is being disposed.
         /// </summary>
         internal static void RemoveAmbientScope()
         {
-            var current = CallContext.LogicalGetData(AmbientDbContextScopeKey) as InstanceIdentifier;
-            CallContext.LogicalSetData(AmbientDbContextScopeKey, null);
+            var current = AmbientDbContextScopeIdentifier.Value;
+            AmbientDbContextScopeIdentifier.Value = null;
 
             // If there was an ambient scope, we can stop tracking it now
             if (current != null)
@@ -444,12 +422,12 @@ Stack Trace:
         }
 
         /// <summary>
-        /// Clears the ambient scope from the CallContext but keeps tracking its instance. Call this to temporarily
+        /// Clears the ambient scope from the AsyncLocal but keeps tracking its instance. Call this to temporarily
         /// hide the ambient context (e.g. to prevent it from being captured by parallel task).
         /// </summary>
         internal static void HideAmbientScope()
         {
-            CallContext.LogicalSetData(AmbientDbContextScopeKey, null);
+            AmbientDbContextScopeIdentifier.Value = null;
         }
 
         /// <summary>
@@ -458,7 +436,7 @@ Stack Trace:
         internal static DbContextScope? GetAmbientScope()
         {
             // Retrieve the identifier of the ambient scope (if any)
-            var instanceIdentifier = CallContext.LogicalGetData(AmbientDbContextScopeKey) as InstanceIdentifier;
+            var instanceIdentifier = AmbientDbContextScopeIdentifier.Value;
             if (instanceIdentifier == null)
                 return null; // Either no ambient context has been set or we've crossed an app domain boundary and have (intentionally) lost the ambient context
 
@@ -467,20 +445,20 @@ Stack Trace:
             if (DbContextScopeInstances.TryGetValue(instanceIdentifier, out ambientScope))
                 return ambientScope;
 
-            // We have an instance identifier in the CallContext but no corresponding instance
+            // We have an instance identifier in the AsyncLocal but no corresponding instance
             // in our DbContextScopeInstances table. This should never happen! The only place where
             // we remove the instance from the DbContextScopeInstances table is in RemoveAmbientScope(),
-            // which also removes the instance identifier from the CallContext.
+            // which also removes the instance identifier from the AsyncLocal.
             //
             // There's only one scenario where this could happen: someone let go of a DbContextScope
-            // instance without disposing it. In that case, the CallContext
+            // instance without disposing it. In that case, the AsyncLocal
             // would still contain a reference to the scope and we'd still have that scope's instance
             // in our DbContextScopeInstances table. But since we use a ConditionalWeakTable to store
             // our DbContextScope instances and are therefore only holding a weak reference to these instances,
             // the GC would be able to collect it. Once collected by the GC, our ConditionalWeakTable will return
             // null when queried for that instance. In that case, we're OK. This is a programming error
             // but our use of a ConditionalWeakTable prevented a leak.
-            System.Diagnostics.Debug.WriteLine($"Programming error detected. Found a reference to an ambient {nameof(DbContextScope)} in the {nameof(CallContext)} but didn't have an instance for it in our {nameof(DbContextScopeInstances)} table. This most likely means that this {nameof(DbContextScope)} instance wasn't disposed of properly. {nameof(DbContextScope)} instances must always be disposed. Review the code for any {nameof(DbContextScope)} instance used outside of a 'using' block and fix it so that all {nameof(DbContextScope)} instances are disposed of.");
+            System.Diagnostics.Debug.WriteLine($"Programming error detected. Found a reference to an ambient {nameof(DbContextScope)} in the {nameof(AmbientDbContextScopeIdentifier)} variable but didn't have an instance for it in our {nameof(DbContextScopeInstances)} table. This most likely means that this {nameof(DbContextScope)} instance wasn't disposed of properly. {nameof(DbContextScope)} instances must always be disposed. Review the code for any {nameof(DbContextScope)} instance used outside of a 'using' block and fix it so that all {nameof(DbContextScope)} instances are disposed of.");
             return null;
         }
 

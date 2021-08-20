@@ -26,7 +26,7 @@
             // with a null value since we removed the instance.
             //
             // It would be a fairly nasty bug to track down. So don't let
-            // that happen. Hiding the ambient scope (i.e. clearing the CallContext
+            // that happen. Hiding the ambient scope (i.e. clearing the AsyncLocal
             // in our execution flow but leaving the ambient scope instance untouched)
             // is safe.
             DbContextScope.HideAmbientScope();
