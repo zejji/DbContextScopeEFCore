@@ -54,7 +54,7 @@ namespace Zejji.Entity
         /// in the DbContext instances managed by the parent scope. 
         /// 
 		/// If there is no parent scope (i.e. if this DbContextScope
-		/// if the top-level scope), does nothing.
+		/// is the top-level scope), does nothing.
         /// 
         /// This is useful when you have forced the creation of a new
         /// DbContextScope and want to make sure that the parent scope
@@ -71,7 +71,7 @@ namespace Zejji.Entity
         /// in the DbContext instances managed by the parent scope. 
         /// 
         /// If there is no parent scope (i.e. if this DbContextScope
-        /// if the top-level scope), does nothing.
+        /// is the top-level scope), does nothing.
         /// 
         /// This is useful when you have forced the creation of a new
         /// DbContextScope and want to make sure that the parent scope

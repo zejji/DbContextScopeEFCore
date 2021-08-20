@@ -6,9 +6,7 @@ namespace Zejji.Entity
     /// A factory to create DbContext instances.
     /// </summary>
     /// <remarks>
-    /// This factory is used by the DbContextScope class library.
-    /// See https://mehdi.me/ambient-dbcontext-in-ef6/
-    /// It should be registered as a singleton.
+    /// It should be registered in a dependency injection container as a singleton.
     /// </remarks>
     public class RegisteredDbContextFactory : IDbContextFactory
     {

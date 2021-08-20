@@ -9,11 +9,11 @@ namespace Zejji.Entity
     /// <remarks>
 	/// If your DbContext-derived classes have a default constructor, 
 	/// you can ignore this factory. DbContextScope will take care of
-	/// instanciating your DbContext class with Activator.CreateInstance() 
+	/// instantiating your DbContext class with Activator.CreateInstance() 
 	/// when needed.
 	/// 
 	/// If your DbContext-derived classes don't expose a default constructor
-	/// however, you must impement this interface and provide it to DbContextScope
+	/// however, you must implement this interface and provide it to DbContextScope
 	/// so that it can create instances of your DbContexts.
 	/// 
 	/// A typical situation where this would be needed is in the case of your DbContext-derived 

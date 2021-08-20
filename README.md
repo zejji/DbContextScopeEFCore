@@ -24,15 +24,17 @@ The new `RegisteredDbContextFactory` class can be used as follows:
 
 - In `Startup.cs`, register a `RegisteredDbContextFactory` instance as a singleton and register one or more `DbContext` factory functions on that instance, e.g.:
 ``` csharp
+using Zejji.Entity;
+...
 public void ConfigureServices(IServiceCollection services)
 {
     ...
     var dbContextFactory = new RegisteredDbContextFactory();
     dbContextFactory.RegisterDbContextType<DbContextOne>(() =>
-        new DbContextOne(Configuration.GetConnectionString("DatabaseOne"));
+        new DbContextOne(Configuration.GetConnectionString("DatabaseOne")));
     dbContextFactory.RegisterDbContextType<DbContextTwo>(() =>
-        new DbContextTwo(Configuration.GetConnectionString("DatabaseTwo"));
-    services.AddSingleton<IDbContextFactory>(_ => dbContextFactory);
+        new DbContextTwo(Configuration.GetConnectionString("DatabaseTwo")));
+    services.AddSingleton<IDbContextFactory>(dbContextFactory);
     ...
 }
 ```
