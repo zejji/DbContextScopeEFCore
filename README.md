@@ -14,11 +14,11 @@ This package is based on the original [DbContextScope repository](https://github
 
 Mehdi El Gueddari's original article describing the thinking behind the `DbContextScope` library can be found [here](https://mehdi.me/ambient-dbcontext-in-ef6/).
 
-In summary, the library addresses the problem that injecting `DbContext` instances as a scoped dependency (which ordinarily results in one instance per web request) offers insufficient control over the lifetime of `DbContext` instances in more complex scenarios. 
+In summary, the library addresses the problem that injecting `DbContext` instances as a scoped dependency (which ordinarily results in one instance per web request) offers insufficient control over the lifetime of `DbContext` instances in more complex scenarios.
 
 The `DbContextScope` library allows users to create scopes which control the lifetime of ambient `DbContext` instances, as well giving control over the exact time at which changes are saved.
 
-For general usage instructions, see the original Github repository and article referred to above. Please note the `Mehdime.Entity` namespace has been renamed to `Zejji.Entity`.
+For general usage instructions, see article referred to above and the original GitHub repository readme file (a copy of which is included in this repository [here](./ORIGINAL_README.md)). Please note the `Mehdime.Entity` namespace has been renamed to `Zejji.Entity`.
 
 The new `RegisteredDbContextFactory` class can be used as follows:
 
