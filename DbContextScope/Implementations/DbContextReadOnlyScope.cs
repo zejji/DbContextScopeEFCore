@@ -6,7 +6,7 @@ namespace Zejji.Entity
     {
         private DbContextScope _internalScope;
 
-        public IDbContextCollection DbContexts { get { return _internalScope.DbContexts; } }
+        public IDbContextCollection DbContexts => _internalScope.DbContexts;
 
         public DbContextReadOnlyScope(IDbContextFactory? dbContextFactory = null)
             : this(joiningOption: DbContextScopeOption.JoinExisting, isolationLevel: null, dbContextFactory: dbContextFactory)

@@ -15,7 +15,7 @@ namespace Zejji.Entity
         private DbContextScope? _parentScope;
         private DbContextCollection _dbContexts;
 
-        public IDbContextCollection DbContexts { get { return _dbContexts; } }
+        public IDbContextCollection DbContexts => _dbContexts;
 
         public DbContextScope(IDbContextFactory? dbContextFactory = null) :
             this(joiningOption: DbContextScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbContextFactory: dbContextFactory)
@@ -133,7 +133,6 @@ namespace Zejji.Entity
         public async Task RefreshEntitiesInParentScopeAsync(IEnumerable entities)
         {
             // See comments in the sync version of this method for an explanation of what we're doing here.
-
             if (entities == null)
                 return;
 

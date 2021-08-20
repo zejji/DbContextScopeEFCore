@@ -39,12 +39,12 @@ namespace Zejji.Entity
         /// <summary>
         /// Forces the creation of a new ambient DbContextScope (i.e. does not
         /// join the ambient scope if there is one) and wraps all DbContext instances
-        /// created within that scope in an explicit database transaction with 
+        /// created within that scope in an explicit database transaction with
         /// the provided isolation level.
         ///
-        /// WARNING: the database transaction will remain open for the whole 
+        /// WARNING: the database transaction will remain open for the whole
         /// duration of the scope! So keep the scope as short-lived as possible.
-        /// Don't make any remote API calls or perform any long running computation 
+        /// Don't make any remote API calls or perform any long running computation
         /// within that scope.
         ///
         /// This is an advanced feature that you should use very carefully
@@ -55,12 +55,12 @@ namespace Zejji.Entity
         /// <summary>
         /// Forces the creation of a new ambient read-only DbContextScope (i.e. does not
         /// join the ambient scope if there is one) and wraps all DbContext instances
-        /// created within that scope in an explicit database transaction with 
+        /// created within that scope in an explicit database transaction with
         /// the provided isolation level.
         ///
-        /// WARNING: the database transaction will remain open for the whole 
+        /// WARNING: the database transaction will remain open for the whole
         /// duration of the scope! So keep the scope as short-lived as possible.
-        /// Don't make any remote API calls or perform any long running computation 
+        /// Don't make any remote API calls or perform any long running computation
         /// within that scope.
         ///
         /// This is an advanced feature that you should use very carefully
