@@ -301,7 +301,7 @@ namespace Zejji.Entity
                      * So just record a warning here. Hopefully someone will see it and will fix the code.
                      */
 
-                    var message = @$"PROGRAMMING ERROR - When attempting to dispose a {nameof(DbContextScope)}, we found that our parent {nameof(DbContextScope)} has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a {nameof(DbContextScope)} without suppressing the ambient context first. 
+                    var message = @$"PROGRAMMING ERROR - When attempting to dispose a {nameof(DbContextScope)}, we found that our parent {nameof(DbContextScope)} has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a {nameof(DbContextScope)} without suppressing the ambient context first.
 
 In order to fix this:
 1) Look at the stack trace below - this is the stack trace of the parallel task in question.
@@ -350,7 +350,7 @@ Stack Trace:
          * we could just store our DbContextScope instances in a ThreadStatic
          * variable. That's the "traditional" (i.e. pre-async) way of implementing
          * an ambient context in .NET. You can see an example implementation of
-         * a TheadStatic-based ambient DbContext here: http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/ 
+         * a ThreadStatic-based ambient DbContext here: http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/ 
          *
          * But that would be hugely limiting as it would prevent us from being
          * able to use the new async features added to Entity Framework
@@ -370,20 +370,7 @@ Stack Trace:
          * to avoid our DbContext instances from being accessed from multiple threads.
          */
 
-        private static readonly AsyncLocal<InstanceIdentifier?> AmbientDbContextScopeIdentifier = new();
-
-        // Use a ConditionalWeakTable instead of a simple ConcurrentDictionary to store our DbContextScope instances
-        // in order to prevent leaking DbContextScope instances if someone doesn't dispose them properly.
-        //
-        // For example, if we used a ConcurrentDictionary and someone let go of a DbContextScope instance without
-        // disposing it, our ConcurrentDictionary would still have a reference to it, preventing
-        // the GC from being able to collect it => leak. With a ConditionalWeakTable, we don't hold a reference
-        // to the DbContextScope instances we store in there, allowing them to get GCed.
-        // The doc for ConditionalWeakTable isn't the best. This SO anser does a good job at explaining what
-        // it does: http://stackoverflow.com/a/18613811
-        private static readonly ConditionalWeakTable<InstanceIdentifier, DbContextScope> DbContextScopeInstances = new ConditionalWeakTable<InstanceIdentifier, DbContextScope>();
-
-        private readonly InstanceIdentifier _instanceIdentifier = new InstanceIdentifier();
+        private static readonly AsyncLocal<DbContextScope?> AmbientDbContextScope = new();
 
         /// <summary>
         /// Makes the provided 'dbContextScope' available as the the ambient scope via the AsyncLocal.
@@ -393,41 +380,21 @@ Stack Trace:
             if (newAmbientScope == null)
                 throw new ArgumentNullException(nameof(newAmbientScope));
 
-            var current = AmbientDbContextScopeIdentifier.Value;
+            var current = AmbientDbContextScope.Value;
 
-            if (current == newAmbientScope._instanceIdentifier)
+            if (current == newAmbientScope)
                 return;
 
-            // Store the new scope's instance identifier in the AsyncLocal, making it the ambient scope
-            AmbientDbContextScopeIdentifier.Value = newAmbientScope._instanceIdentifier;
-
-            // Keep track of this instance (or do nothing if we're already tracking it)
-            DbContextScopeInstances.GetValue(newAmbientScope._instanceIdentifier, key => newAmbientScope);
+            // Store the new scope in the AsyncLocal, making it the ambient scope
+            AmbientDbContextScope.Value = newAmbientScope;
         }
 
         /// <summary>
-        /// Clears the ambient scope from the AsyncLocal and stops tracking its instance.
-        /// Call this when a DbContextScope is being disposed.
+        /// Clears the ambient scope from the AsyncLocal.
         /// </summary>
         internal static void RemoveAmbientScope()
         {
-            var current = AmbientDbContextScopeIdentifier.Value;
-            AmbientDbContextScopeIdentifier.Value = null;
-
-            // If there was an ambient scope, we can stop tracking it now
-            if (current != null)
-            {
-                DbContextScopeInstances.Remove(current);
-            }
-        }
-
-        /// <summary>
-        /// Clears the ambient scope from the AsyncLocal but keeps tracking its instance. Call this to temporarily
-        /// hide the ambient context (e.g. to prevent it from being captured by parallel task).
-        /// </summary>
-        internal static void HideAmbientScope()
-        {
-            AmbientDbContextScopeIdentifier.Value = null;
+            AmbientDbContextScope.Value = null;
         }
 
         /// <summary>
@@ -435,46 +402,11 @@ Stack Trace:
         /// </summary>
         internal static DbContextScope? GetAmbientScope()
         {
-            // Retrieve the identifier of the ambient scope (if any)
-            var instanceIdentifier = AmbientDbContextScopeIdentifier.Value;
-            if (instanceIdentifier == null)
-                return null; // Either no ambient context has been set or we've crossed an app domain boundary and have (intentionally) lost the ambient context
-
-            // Retrieve the DbContextScope instance corresponding to this identifier
-            DbContextScope? ambientScope;
-            if (DbContextScopeInstances.TryGetValue(instanceIdentifier, out ambientScope))
-                return ambientScope;
-
-            // We have an instance identifier in the AsyncLocal but no corresponding instance
-            // in our DbContextScopeInstances table. This should never happen! The only place where
-            // we remove the instance from the DbContextScopeInstances table is in RemoveAmbientScope(),
-            // which also removes the instance identifier from the AsyncLocal.
-            //
-            // There's only one scenario where this could happen: someone let go of a DbContextScope
-            // instance without disposing it. In that case, the AsyncLocal
-            // would still contain a reference to the scope and we'd still have that scope's instance
-            // in our DbContextScopeInstances table. But since we use a ConditionalWeakTable to store
-            // our DbContextScope instances and are therefore only holding a weak reference to these instances,
-            // the GC would be able to collect it. Once collected by the GC, our ConditionalWeakTable will return
-            // null when queried for that instance. In that case, we're OK. This is a programming error
-            // but our use of a ConditionalWeakTable prevented a leak.
-            System.Diagnostics.Debug.WriteLine($"Programming error detected. Found a reference to an ambient {nameof(DbContextScope)} in the {nameof(AmbientDbContextScopeIdentifier)} variable but didn't have an instance for it in our {nameof(DbContextScopeInstances)} table. This most likely means that this {nameof(DbContextScope)} instance wasn't disposed of properly. {nameof(DbContextScope)} instances must always be disposed. Review the code for any {nameof(DbContextScope)} instance used outside of a 'using' block and fix it so that all {nameof(DbContextScope)} instances are disposed of.");
-            return null;
+            // Retrieve the ambient scope (if any)
+            return AmbientDbContextScope.Value;
         }
 
         #endregion
     }
-
-    /*
-     * The idea of using an object reference as our instance identifier
-     * instead of simply using a unique string (which we could have generated
-     * with Guid.NewGuid() for example) comes from the TransactionScope
-     * class. As far as I can make out, a string would have worked just fine.
-     * I'm guessing that this is done for optimization purposes. Creating
-     * an empty class is cheaper and uses up less memory than generating
-     * a unique string.
-    */
-    internal class InstanceIdentifier : MarshalByRefObject
-    { }
 }
 
