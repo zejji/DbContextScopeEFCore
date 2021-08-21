@@ -1,4 +1,8 @@
-# DbContextScopeEFCore6
+# DbContextScope.EFCore6
+
+![CI](https://github.com/zejji/DbContextScopeEFCore6/actions/workflows/dotnet.yml/badge.svg)
+[![NuGet](https://img.shields.io/nuget/dt/Zejji.DbContextScope.EFCore6.svg)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore6)
+[![NuGet version (Zejji.DbContextScope.EFCore6)](https://img.shields.io/nuget/v/Zejji.DbContextScope.EFCore6.svg?style=flat-square)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore6/)
 
 A library for managing the lifetime of Entity Framework Core 6 DbContext instances.
 
@@ -7,7 +11,7 @@ This package is based on the original [DbContextScope repository](https://github
 - updated for .NET 6 and EF Core 6 (including replacing usages of `CallContext` with `AsyncLocal`);
 - added fix for `RefreshEntitiesInParentScope` method so that it works correctly for entities with composite primary keys;
 - added fix for `DbContextCollection`'s `Commit` and `CommitAsync` methods so that `SaveChanges` can be called more than once if there is a `DbUpdateConcurrencyException` (see [this](https://github.com/mehdime/DbContextScope/pull/31) unmerged pull request in the original `DbContextScope` repository);
-- added the `RegisteredDbContextFactory` class as a concrete implementation of the `IDbContextFactory` interface, which allows users to register factory functions for one or more `DbContext` type(s); and
+- added the `RegisteredDbContextFactory` class as a concrete implementation of the `IDbContextFactory` interface, which allows users to easily register factory functions for one or more `DbContext` type(s) during startup; and
 - added unit tests.
 
 ## Description
