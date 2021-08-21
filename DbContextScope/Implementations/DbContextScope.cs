@@ -2,18 +2,17 @@
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Collections;
 using System.Data;
-using System.Runtime.CompilerServices;
 
 namespace Zejji.Entity
 {
     public sealed class DbContextScope : IDbContextScope
     {
         private bool _disposed;
-        private bool _readOnly;
+        private readonly bool _readOnly;
         private bool _completed;
-        private bool _nested;
-        private DbContextScope? _parentScope;
-        private DbContextCollection _dbContexts;
+        private readonly bool _nested;
+        private readonly DbContextScope? _parentScope;
+        private readonly DbContextCollection _dbContexts;
 
         public IDbContextCollection DbContexts => _dbContexts;
 

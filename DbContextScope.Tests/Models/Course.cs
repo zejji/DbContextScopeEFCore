@@ -1,4 +1,4 @@
-﻿namespace DbContextScope.Tests.Models
+﻿namespace Zejji.Tests.Models
 {
     internal class Course
     {

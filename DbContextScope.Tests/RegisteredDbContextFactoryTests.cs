@@ -1,11 +1,11 @@
-﻿using DbContextScope.Tests.Helpers;
-using DbContextScope.Tests.Models;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Zejji.Entity;
+using Zejji.Tests.Helpers;
+using Zejji.Tests.Models;
 
-namespace DbContextScope.Tests
+namespace Zejji.Tests
 {
     public sealed class RegisteredDbContextFactoryTests : IDisposable
     {

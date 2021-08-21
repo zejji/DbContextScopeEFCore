@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.Data.Common;
 
-namespace DbContextScope.Tests.Helpers
+namespace Zejji.Tests.Helpers
 {
     internal class SqliteMemoryDatabaseLifetimeManager : IDisposable
     {

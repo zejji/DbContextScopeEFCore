@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace DbContextScope.Tests.Models
+namespace Zejji.Tests.Models
 {
     internal class TestDbContext : DbContext
     {

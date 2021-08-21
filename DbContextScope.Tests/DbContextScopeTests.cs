@@ -1,12 +1,13 @@
-using DbContextScope.Tests.Helpers;
-using DbContextScope.Tests.Models;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using System.Runtime.Serialization;
 using Xunit;
 using Zejji.Entity;
+using Zejji.Tests.Helpers;
+using Zejji.Tests.Models;
 
-namespace DbContextScope.Tests;
+namespace Zejji.Tests;
 public sealed class DbContextScopeTests : IDisposable
 {
     private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
@@ -123,7 +124,7 @@ public sealed class DbContextScopeTests : IDisposable
         using (var dbContextScope = _dbContextScopeFactory.Create())
         {
             var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
-            
+
             // Arrange - add a user and call SaveChanges once
             dbContext.Users.Add(new User { Name = "Test User" });
             dbContextScope.SaveChanges();
@@ -392,5 +393,95 @@ public sealed class DbContextScopeTests : IDisposable
                 outerUser2CoursesUsers[0].Grade.Should().Be("F"); // unchanged from original value
             }
         }
+    }
+
+    [Fact]
+    public void Calling_SuppressAmbientContext_should_suppress_ambient_DbContextScope()
+    {
+        using (var dbContextScope = _dbContextScopeFactory.Create())
+        {
+            dbContextScope.Should().NotBeNull();
+
+            var outerAmbientContextLocator = new AmbientDbContextLocator();
+            var outerContext1 = outerAmbientContextLocator.Get<TestDbContext>();
+            outerContext1.Should().NotBeNull();
+
+            using (var suppressor = _dbContextScopeFactory.SuppressAmbientContext())
+            {
+                var suppressedAmbientContextLocator = new AmbientDbContextLocator();
+
+                // Since we have suppressed the ambient DbContextScope here, we should
+                // not be able to get a DbContext from the innerAmbientContextLocator
+                var suppressedContext = suppressedAmbientContextLocator.Get<TestDbContext>();
+                suppressedContext.Should().BeNull();
+
+                // And any new DbContextScope should not join the existing one
+                using (var innerDbContextScope = _dbContextScopeFactory.Create())
+                {
+                    innerDbContextScope.Should().NotBeNull();
+
+                    var innerAmbientContextLocator = new AmbientDbContextLocator();
+                    var innerContext = innerAmbientContextLocator.Get<TestDbContext>();
+                    innerContext.Should().NotBeNull();
+                    innerContext.Should().NotBeSameAs(outerContext1);
+                }
+            }
+
+            // The original ambient DbContextScope should be restored here
+            var outerContext2 = outerAmbientContextLocator.Get<TestDbContext>();
+            outerContext1.Should().NotBeNull();
+            outerContext2.Should().BeSameAs(outerContext1);
+        }
+    }
+
+    [Fact]
+    public void Multiple_threads_which_create_a_DbContextScope_use_separate_DbContexts()
+    {
+        const int threadCount = 4;
+
+        // We will use an ObjectIDGenerator to get a unique ID for each unique object
+        var idGenerator = new ObjectIDGenerator();
+
+        // We need a lock object because ObjectIDGenerator is not thread-safe
+        var lockObject = new object();
+
+        // Initialize some collections to hold the object IDs of the DbContextScope
+        // and DbContext entities we will create
+        var dbContextScopeIds = new List<long>();
+        var dbContextIds = new List<long>();
+
+        Parallel.For(
+            fromInclusive: 0,
+            toExclusive: threadCount,
+            parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = threadCount },
+            body: i =>
+        {
+            using (var dbContextScope = _dbContextScopeFactory.Create())
+            {
+                dbContextScope.Should().NotBeNull();
+
+                lock (lockObject)
+                {
+                    var dbContextScopeId = idGenerator.GetId(dbContextScope, out bool _);
+                    dbContextScopeIds.Add(dbContextScopeId);
+                }
+
+                var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
+                dbContext.Should().NotBeNull();
+
+                lock (lockObject)
+                {
+                    var dbContextId = idGenerator.GetId(dbContext, out bool _);
+                    dbContextIds.Add(dbContextId);
+                }
+            }
+        });
+
+        // We should have a unique DbContextScope and DbContext for each thread
+        dbContextScopeIds.Count.Should().Be(threadCount);
+        dbContextIds.Count.Should().Be(threadCount);
+
+        dbContextScopeIds.Should().OnlyHaveUniqueItems();
+        dbContextIds.Should().OnlyHaveUniqueItems();
     }
 }

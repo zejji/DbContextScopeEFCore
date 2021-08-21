@@ -1,8 +1,8 @@
-﻿using DbContextScope.Tests.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Zejji.Entity;
+using Zejji.Tests.Models;
 
-namespace DbContextScope.Tests.Helpers
+namespace Zejji.Tests.Helpers
 {
     internal class TestDbContextFactory : IDbContextFactory
     {

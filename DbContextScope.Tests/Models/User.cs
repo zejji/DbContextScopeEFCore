@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DbContextScope.Tests.Models
+namespace Zejji.Tests.Models
 {
     internal class User
     {

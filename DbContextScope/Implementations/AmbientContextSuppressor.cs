@@ -9,8 +9,8 @@
         {
             _savedScope = DbContextScope.GetAmbientScope();
 
-            // We're hiding the ambient scope, but not removing its instance
-            // altogether, by keeping a reference to it.
+            // We're hiding the ambient scope, but keeping a reference
+            // so we can restore it later.
             DbContextScope.RemoveAmbientScope();
         }
 
