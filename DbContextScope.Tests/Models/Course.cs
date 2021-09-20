@@ -1,4 +1,6 @@
-﻿namespace Zejji.Tests.Models
+﻿using System.Collections.Generic;
+
+namespace Zejji.Tests.Models
 {
     internal class Course
     {

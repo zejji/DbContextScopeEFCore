@@ -1,4 +1,7 @@
-﻿namespace Zejji.Entity
+﻿using System;
+using System.Collections.Generic;
+
+namespace Zejji.Entity
 {
     /// <summary>
     /// Dictionary to map a type to a function returning that type.

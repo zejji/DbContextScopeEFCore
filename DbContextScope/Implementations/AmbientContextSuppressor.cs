@@ -1,4 +1,6 @@
-﻿namespace Zejji.Entity
+﻿using System;
+
+namespace Zejji.Entity
 {
     public sealed class AmbientContextSuppressor : IDisposable
     {

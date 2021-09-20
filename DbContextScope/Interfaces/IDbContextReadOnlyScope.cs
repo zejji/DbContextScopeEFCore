@@ -1,4 +1,6 @@
-﻿namespace Zejji.Entity
+﻿using System;
+
+namespace Zejji.Entity
 {
     /// <summary>
     /// A read-only DbContextScope. Refer to the comments for IDbContextScope

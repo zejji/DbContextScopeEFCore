@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using System;
 using System.Data.Common;
 
 namespace Zejji.Tests.Helpers
