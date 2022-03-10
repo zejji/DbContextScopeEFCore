@@ -4,13 +4,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <PackageId>Zejji.DbContextScope.EFCore6</PackageId>
-    <Version>6.0.1</Version>
+    <Version>6.0.3</Version>
     <Authors>Mehdi El Gueddari;Gerard Howell</Authors>
     <PackageTags>DbContextScope;DbContext;EF;EF Core;Entity Framework;Entity Framework Core</PackageTags>
     <Description>A library for managing the lifetime of Entity Framework Core 6 DbContext instances. This package is based on the original DbContextScope repository by Mehdi El Gueddari, updated for .NET 6 and EF Core 6, with a number of additional improvements and bug fixes.</Description>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/zejji/DbContextScopeEFCore6</RepositoryUrl>
-    <Copyright>Copyright (c) 2014 Mehdi El Gueddari; (c) 2021 Gerard Howell</Copyright>
+    <Copyright>Copyright (c) 2014 Mehdi El Gueddari; (c) 2022 Gerard Howell</Copyright>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
