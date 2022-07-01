@@ -33,11 +33,17 @@ using Zejji.Entity;
 public void ConfigureServices(IServiceCollection services)
 {
     ...
+    // Create an instance of the RegisteredDbContextFactory
     var dbContextFactory = new RegisteredDbContextFactory();
+
+    // Register factory functions for each of the required DbContext types
     dbContextFactory.RegisterDbContextType<DbContextOne>(() =>
         new DbContextOne(Configuration.GetConnectionString("DatabaseOne")));
     dbContextFactory.RegisterDbContextType<DbContextTwo>(() =>
         new DbContextTwo(Configuration.GetConnectionString("DatabaseTwo")));
+
+    // Register the RegisteredDbContextFactory instance as a singleton
+    // with the dependency injection container.
     services.AddSingleton<IDbContextFactory>(dbContextFactory);
     ...
 }
