@@ -1,14 +1,16 @@
-# DbContextScope.EFCore6
+# DbContextScope.EFCore
 
-![CI](https://github.com/zejji/DbContextScopeEFCore6/actions/workflows/dotnet.yml/badge.svg)
-[![NuGet](https://img.shields.io/nuget/dt/Zejji.DbContextScope.EFCore6.svg)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore6)
-[![NuGet version (Zejji.DbContextScope.EFCore6)](https://img.shields.io/nuget/v/Zejji.DbContextScope.EFCore6.svg?style=flat-square)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore6/)
+![CI](https://github.com/zejji/DbContextScopeEFCore/actions/workflows/dotnet.yml/badge.svg)
+[![NuGet](https://img.shields.io/nuget/dt/Zejji.DbContextScope.EFCore.svg)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore)
+[![NuGet version (Zejji.DbContextScope.EFCore)](https://img.shields.io/nuget/v/Zejji.DbContextScope.EFCore.svg?style=flat-square)](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore/)
 
-A library for managing the lifetime of Entity Framework Core 6 DbContext instances.
+A library for managing the lifetime of Entity Framework Core DbContext instances.
+
+**NB:** Please use the version of this library which matches your EF Core version.
 
 This package is based on the original [DbContextScope repository](https://github.com/mehdime/DbContextScope) by Mehdi El Gueddari with the following changes:
 
-- updated for .NET 6 and EF Core 6 (including replacing usages of `CallContext` with `AsyncLocal`);
+- updated for .NET 6+ and EF Core (including replacing usages of `CallContext` with `AsyncLocal`);
 - added fix for `RefreshEntitiesInParentScope` method so that it works correctly for entities with composite primary keys;
 - added fix for `DbContextCollection`'s `Commit` and `CommitAsync` methods so that `SaveChanges` can be called more than once if there is a `DbUpdateConcurrencyException` (see [this](https://github.com/mehdime/DbContextScope/pull/31) unmerged pull request in the original `DbContextScope` repository);
 - added the `RegisteredDbContextFactory` class as a concrete implementation of the `IDbContextFactory` interface, which allows users to easily register factory functions for one or more `DbContext` type(s) during startup; and
@@ -55,12 +57,12 @@ See also the unit tests for `RegisteredDbContextFactory` [here](./DbContextScope
 
 ### Dependencies
 
-- .NET 6
-- EF Core 6
+- .NET 6+
+- EF Core (version equal or higher to Zejji.DbContextScope.EFCore pacakge version)
 
 ### Installing
 
-- `dotnet add package Zejji.DbContextScope.EFCore6`
+- `dotnet add package Zejji.DbContextScope.EFCore`
 
 ## License
 
