@@ -16,7 +16,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.200'
+        dotnet-version: '6.0.405'
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore
@@ -24,3 +24,7 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Build NuGet
+      run: dotnet pack -c Release -p:ContinuousIntegrationBuild=true
+    - name: Push NuGet
+      run: dotnet nuget push ./DbContextScope/bin/Release/Zejji.DbContextScope.EFCore6.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
