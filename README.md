@@ -58,7 +58,7 @@ See also the unit tests for `RegisteredDbContextFactory` [here](./DbContextScope
 ### Dependencies
 
 - .NET 6+
-- EF Core (version equal or higher to Zejji.DbContextScope.EFCore pacakge version)
+- EF Core (version equal to or higher than Zejji.DbContextScope.EFCore package version)
 
 ### Installing
 
