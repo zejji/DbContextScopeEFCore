@@ -4,9 +4,9 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <PackageId>Zejji.DbContextScope.EFCore</PackageId>
-    <Version>7.0.3</Version>
+    <Version>7.0.4</Version>
     <Authors>Mehdi El Gueddari;Gerard Howell</Authors>
-    <PackageTags>DbContextScope;DbContext;EF;EF Core;Entity Framework;Entity Framework Core</PackageTags>
+    <PackageTags>DbContextScope;DbContext;EF;EFCore;EntityFramework;EntityFrameworkCore;UnitOfWork;AmbientDbContext;AmbientContext;RepositoryPattern</PackageTags>
     <Description>A library for managing the lifetime of Entity Framework Core DbContext instances. This package is based on the original DbContextScope repository by Mehdi El Gueddari, updated for .NET 6+ and EF Core, with a number of additional improvements and bug fixes.</Description>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -22,8 +22,8 @@
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="" />
     <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.4" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
