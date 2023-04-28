@@ -2,7 +2,6 @@ name: .NET
 
 on:
   push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -16,7 +15,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '7.0.202'
+        dotnet-version: | 
+          6.0.x
+          7.0.x
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore
@@ -36,7 +37,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '7.0.202'
+        dotnet-version: '7.0.203'
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore

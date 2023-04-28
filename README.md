@@ -6,7 +6,15 @@
 
 A library for managing the lifetime of Entity Framework Core DbContext instances.
 
-**NB:** Please use the version of this library which matches your EF Core version.
+---
+
+**Note re package versioning:** Please use the version of this library which matches your EF Core version.
+
+For EF Core 6, the NuGet package can be found at [Zejji.DbContextScope.EFCore6](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore6/).
+
+To avoid having a separate NuGet package for each EF Core version, for EF Core 7 onwards, the decision was taken to remove the EF Core version from the package name and instead have the Zejji.DbContextScope.EFCore package version number follow the EF Core version - the current NuGet package can be found at [Zejji.DbContextScope.EFCore](https://www.nuget.org/packages/Zejji.DbContextScope.EFCore/).
+
+---
 
 This package is based on the original [DbContextScope repository](https://github.com/mehdime/DbContextScope) by Mehdi El Gueddari with the following changes:
 
