@@ -11,13 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: | 
-          6.0.x
-          7.0.x
+        dotnet-version: |
+          8.0.x
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore
@@ -33,11 +32,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '7.0.203'
+        dotnet-version: '8.0.100-rc.2'
         include-prerelease: true
     - name: Restore dependencies
       run: dotnet restore

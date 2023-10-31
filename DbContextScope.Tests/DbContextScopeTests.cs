@@ -1,10 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Xunit;
 using Zejji.Entity;
@@ -12,6 +11,7 @@ using Zejji.Tests.Helpers;
 using Zejji.Tests.Models;
 
 namespace Zejji.Tests;
+
 public sealed class DbContextScopeTests : IDisposable
 {
     private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
@@ -194,7 +194,9 @@ public sealed class DbContextScopeTests : IDisposable
 
                         if (databaseValues == null)
                         {
-                            throw new InvalidOperationException($"Unexpected error - {databaseValues} should never be null here.");
+                            throw new InvalidOperationException(
+                                $"Unexpected error - {databaseValues} should never be null here."
+                            );
                         }
 
                         // Don't make any changes to the entry's CurrentValues, which effectively
@@ -223,8 +225,12 @@ public sealed class DbContextScopeTests : IDisposable
         {
             // Use reflection to check that there is no "SaveChanges" method on dbContextScope
             var type = dbContextScope.GetType();
-            var publicMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var saveChangesMethod = publicMethods.Where(m => m.Name == "SaveChanges").SingleOrDefault();
+            var publicMethods = type.GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+            );
+            var saveChangesMethod = publicMethods
+                .Where(m => m.Name == "SaveChanges")
+                .SingleOrDefault();
             saveChangesMethod.Should().BeNull();
         }
     }
@@ -251,7 +257,11 @@ public sealed class DbContextScopeTests : IDisposable
         {
             var outerDbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
 
-            using (var innerDbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
+            using (
+                var innerDbContextScope = _dbContextScopeFactory.Create(
+                    DbContextScopeOption.ForceCreateNew
+                )
+            )
             {
                 var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
 
@@ -274,11 +284,13 @@ public sealed class DbContextScopeTests : IDisposable
         // Arrange - add two users to the database
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
         {
-            dbContext.Users.AddRange(new User[]
-            {
-                new User { Name = originalName1 },
-                new User { Name = originalName2 }
-            });
+            dbContext.Users.AddRange(
+                new User[]
+                {
+                    new User { Name = originalName1 },
+                    new User { Name = originalName2 }
+                }
+            );
             dbContext.SaveChanges();
         }
 
@@ -290,7 +302,11 @@ public sealed class DbContextScopeTests : IDisposable
             outerUsers.Count.Should().Be(2);
 
             // Arrange - modify the entity in an inner scope created with ForceCreateNew
-            using (var innerDbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
+            using (
+                var innerDbContextScope = _dbContextScopeFactory.Create(
+                    DbContextScopeOption.ForceCreateNew
+                )
+            )
             {
                 var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
                 var innerUsers = innerDbContext.Users.ToList();
@@ -323,26 +339,28 @@ public sealed class DbContextScopeTests : IDisposable
 
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
         {
-            dbContext.Users.AddRange(new User[]
-            {
-                new User
+            dbContext.Users.AddRange(
+                new User[]
                 {
-                    Name = "Test User 1",
-                    CoursesUsers = new CourseUser[]
+                    new User
                     {
-                        new CourseUser { Course = course1, Grade = "A" },
-                        new CourseUser { Course = course2, Grade = "C" }
-                    }
-                },
-                new User
-                {
-                    Name = "Test User 2",
-                    CoursesUsers = new CourseUser[]
+                        Name = "Test User 1",
+                        CoursesUsers = new CourseUser[]
+                        {
+                            new CourseUser { Course = course1, Grade = "A" },
+                            new CourseUser { Course = course2, Grade = "C" }
+                        }
+                    },
+                    new User
                     {
-                    new CourseUser { Course = course1, Grade = "F" }
+                        Name = "Test User 2",
+                        CoursesUsers = new CourseUser[]
+                        {
+                            new CourseUser { Course = course1, Grade = "F" }
+                        }
                     }
                 }
-            });
+            );
             dbContext.SaveChanges();
         }
 
@@ -357,7 +375,11 @@ public sealed class DbContextScopeTests : IDisposable
             outerUsers.Count.Should().Be(2);
 
             // Arrange(2) - modify the CourseUser entities in an inner scope created with ForceCreateNew
-            using (var innerDbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
+            using (
+                var innerDbContextScope = _dbContextScopeFactory.Create(
+                    DbContextScopeOption.ForceCreateNew
+                )
+            )
             {
                 var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
                 var innerUsers = innerDbContext.Users
@@ -385,11 +407,9 @@ public sealed class DbContextScopeTests : IDisposable
 
                 // Act - only refresh the first user's CoursesUsers in the parent scope,
                 // but NOT the second user's
-                innerDbContextScope.RefreshEntitiesInParentScope(new CourseUser[]
-                {
-                    outerUser1CoursesUsers[0],
-                    outerUser1CoursesUsers[1]
-                });
+                innerDbContextScope.RefreshEntitiesInParentScope(
+                    new CourseUser[] { outerUser1CoursesUsers[0], outerUser1CoursesUsers[1] }
+                );
 
                 // Assert
                 outerUser1CoursesUsers[0].Grade.Should().Be("B"); // new value
@@ -443,43 +463,32 @@ public sealed class DbContextScopeTests : IDisposable
     {
         const int threadCount = 4;
 
-        // We will use an ObjectIDGenerator to get a unique ID for each unique object
-        var idGenerator = new ObjectIDGenerator();
-
-        // We need a lock object because ObjectIDGenerator is not thread-safe
-        var lockObject = new object();
-
-        // Initialize some collections to hold the object IDs of the DbContextScope
+        // Initialize some collections to hold the object hash codes of the DbContextScope
         // and DbContext entities we will create
-        var dbContextScopeIds = new List<long>();
-        var dbContextIds = new List<long>();
+        var dbContextScopeIds = new ConcurrentBag<long>();
+        var dbContextIds = new ConcurrentBag<long>();
 
         Parallel.For(
             fromInclusive: 0,
             toExclusive: threadCount,
             parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = threadCount },
             body: i =>
-        {
-            using (var dbContextScope = _dbContextScopeFactory.Create())
             {
-                dbContextScope.Should().NotBeNull();
-
-                lock (lockObject)
+                using (var dbContextScope = _dbContextScopeFactory.Create())
                 {
-                    var dbContextScopeId = idGenerator.GetId(dbContextScope, out bool _);
+                    dbContextScope.Should().NotBeNull();
+
+                    var dbContextScopeId = dbContextScope.GetHashCode();
                     dbContextScopeIds.Add(dbContextScopeId);
-                }
 
-                var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
-                dbContext.Should().NotBeNull();
+                    var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
+                    dbContext.Should().NotBeNull();
 
-                lock (lockObject)
-                {
-                    var dbContextId = idGenerator.GetId(dbContext, out bool _);
+                    var dbContextId = dbContext.GetHashCode();
                     dbContextIds.Add(dbContextId);
                 }
             }
-        });
+        );
 
         // We should have a unique DbContextScope and DbContext for each thread
         dbContextScopeIds.Count.Should().Be(threadCount);

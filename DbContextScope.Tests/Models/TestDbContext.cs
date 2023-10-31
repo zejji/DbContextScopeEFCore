@@ -18,8 +18,7 @@ namespace Zejji.Tests.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<CourseUser>()
-                .HasKey(cu => new { cu.CourseId, cu.UserId });
+            modelBuilder.Entity<CourseUser>().HasKey(cu => new { cu.CourseId, cu.UserId });
         }
 
         public DbSet<Course> Courses { get; set; } = default!;

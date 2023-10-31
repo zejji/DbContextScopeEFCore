@@ -2,7 +2,5 @@
 
 namespace Zejji.Tests.Models
 {
-    internal class EmptyDbContext : DbContext
-    {
-    }
+    internal class EmptyDbContext : DbContext { }
 }

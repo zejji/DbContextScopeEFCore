@@ -31,9 +31,16 @@ namespace Zejji.Entity
         private bool _completed;
         private readonly bool _readOnly;
 
-        internal Dictionary<Type, DbContext> InitializedDbContexts { get { return _initializedDbContexts; } }
+        internal Dictionary<Type, DbContext> InitializedDbContexts
+        {
+            get { return _initializedDbContexts; }
+        }
 
-        public DbContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null, IDbContextFactory? dbContextFactory = null)
+        public DbContextCollection(
+            bool readOnly = false,
+            IsolationLevel? isolationLevel = null,
+            IDbContextFactory? dbContextFactory = null
+        )
         {
             _disposed = false;
             _completed = false;
@@ -46,7 +53,8 @@ namespace Zejji.Entity
             _dbContextFactory = dbContextFactory;
         }
 
-        public TDbContext Get<TDbContext>() where TDbContext : DbContext
+        public TDbContext Get<TDbContext>()
+            where TDbContext : DbContext
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextCollection));
@@ -57,9 +65,10 @@ namespace Zejji.Entity
             {
                 // First time we've been asked for this particular DbContext type.
                 // Create one, cache it and start its database transaction if needed.
-                TDbContext dbContext = _dbContextFactory != null
-                    ? _dbContextFactory.CreateDbContext<TDbContext>()
-                    : Activator.CreateInstance<TDbContext>();
+                TDbContext dbContext =
+                    _dbContextFactory != null
+                        ? _dbContextFactory.CreateDbContext<TDbContext>()
+                        : Activator.CreateInstance<TDbContext>();
 
                 _initializedDbContexts.Add(requestedType, dbContext);
 
@@ -83,7 +92,9 @@ namespace Zejji.Entity
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextCollection));
             if (_completed)
-                throw new InvalidOperationException($"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there.");
+                throw new InvalidOperationException(
+                    $"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there."
+                );
 
             // Best effort. You'll note that we're not actually implementing an atomic commit
             // here. It entirely possible that one DbContext instance will be committed successfully
@@ -147,7 +158,9 @@ namespace Zejji.Entity
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextCollection));
             if (_completed)
-                throw new InvalidOperationException($"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there.");
+                throw new InvalidOperationException(
+                    $"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there."
+                );
 
             // See comments in the sync version of this method for more details.
             ExceptionDispatchInfo? lastError = null;
@@ -191,7 +204,9 @@ namespace Zejji.Entity
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextCollection));
             if (_completed)
-                throw new InvalidOperationException($"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there.");
+                throw new InvalidOperationException(
+                    $"You can't call {nameof(Commit)}() or {nameof(Rollback)}() more than once on a {nameof(DbContextCollection)}. All the changes in the {nameof(DbContext)} instances managed by this collection have already been saved or rolled back and all database transactions have been completed and closed. If you wish to make more data changes, create a new {nameof(DbContextCollection)} and make your changes there."
+                );
 
             ExceptionDispatchInfo? lastError = null;
 
@@ -238,8 +253,10 @@ namespace Zejji.Entity
             {
                 try
                 {
-                    if (_readOnly) Commit();
-                    else Rollback();
+                    if (_readOnly)
+                        Commit();
+                    else
+                        Rollback();
                 }
                 catch (Exception e)
                 {
@@ -267,7 +284,10 @@ namespace Zejji.Entity
         /// Returns the value associated with the specified key or the default
         /// value for the TValue  type.
         /// </summary>
-        private static TValue? GetValueOrDefault<TKey, TValue>(IDictionary<TKey, TValue> dictionary, TKey key)
+        private static TValue? GetValueOrDefault<TKey, TValue>(
+            IDictionary<TKey, TValue> dictionary,
+            TKey key
+        )
         {
             return dictionary.TryGetValue(key, out var value) ? value : default;
         }

@@ -14,7 +14,8 @@ namespace Zejji.Tests.Helpers
             _connectionString = connectionString;
         }
 
-        public TDbContext CreateDbContext<TDbContext>() where TDbContext : DbContext
+        public TDbContext CreateDbContext<TDbContext>()
+            where TDbContext : DbContext
         {
             var contextType = typeof(TDbContext);
             TDbContext context;

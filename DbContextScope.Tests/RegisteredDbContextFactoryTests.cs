@@ -35,10 +35,16 @@ namespace Zejji.Tests
 
             // Arrange - register factory functions for the TestDbContext and EmptyDbContext types
             _dbContextFactory.RegisterDbContextType<TestDbContext>(() =>
-                { testDbContextFactoryCallCount += 1; return new TestDbContext(connectionString); });
+            {
+                testDbContextFactoryCallCount += 1;
+                return new TestDbContext(connectionString);
+            });
 
             _dbContextFactory.RegisterDbContextType<EmptyDbContext>(() =>
-                { emptyDbContextFactoryCallCount += 1; return new EmptyDbContext(); });
+            {
+                emptyDbContextFactoryCallCount += 1;
+                return new EmptyDbContext();
+            });
 
             // Act - ask the factory for some DbContexts
             var testDbContext1 = _dbContextFactory.CreateDbContext<TestDbContext>();
@@ -55,10 +61,14 @@ namespace Zejji.Tests
 
             testDbContext1.Should().NotBeSameAs(testDbContext2);
 
-            var testDbContext1ConnectionString = testDbContext1.Database.GetDbConnection().ConnectionString;
+            var testDbContext1ConnectionString = testDbContext1.Database
+                .GetDbConnection()
+                .ConnectionString;
             testDbContext1ConnectionString.Should().Be(connectionString);
 
-            var testDbContext2ConnectionString = testDbContext2.Database.GetDbConnection().ConnectionString;
+            var testDbContext2ConnectionString = testDbContext2.Database
+                .GetDbConnection()
+                .ConnectionString;
             testDbContext2ConnectionString.Should().Be(connectionString);
         }
     }

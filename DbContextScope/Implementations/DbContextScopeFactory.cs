@@ -12,21 +12,27 @@ namespace Zejji.Entity
             _dbContextFactory = dbContextFactory;
         }
 
-        public IDbContextScope Create(DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting)
+        public IDbContextScope Create(
+            DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting
+        )
         {
             return new DbContextScope(
                 joiningOption: joiningOption,
                 readOnly: false,
                 isolationLevel: null,
-                dbContextFactory: _dbContextFactory);
+                dbContextFactory: _dbContextFactory
+            );
         }
 
-        public IDbContextReadOnlyScope CreateReadOnly(DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting)
+        public IDbContextReadOnlyScope CreateReadOnly(
+            DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting
+        )
         {
             return new DbContextReadOnlyScope(
                 joiningOption: joiningOption,
                 isolationLevel: null,
-                dbContextFactory: _dbContextFactory);
+                dbContextFactory: _dbContextFactory
+            );
         }
 
         public IDbContextScope CreateWithTransaction(IsolationLevel isolationLevel)
@@ -35,7 +41,8 @@ namespace Zejji.Entity
                 joiningOption: DbContextScopeOption.ForceCreateNew,
                 readOnly: false,
                 isolationLevel: isolationLevel,
-                dbContextFactory: _dbContextFactory);
+                dbContextFactory: _dbContextFactory
+            );
         }
 
         public IDbContextReadOnlyScope CreateReadOnlyWithTransaction(IsolationLevel isolationLevel)
@@ -43,7 +50,8 @@ namespace Zejji.Entity
             return new DbContextReadOnlyScope(
                 joiningOption: DbContextScopeOption.ForceCreateNew,
                 isolationLevel: isolationLevel,
-                dbContextFactory: _dbContextFactory);
+                dbContextFactory: _dbContextFactory
+            );
         }
 
         public IDisposable SuppressAmbientContext()
