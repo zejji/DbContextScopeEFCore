@@ -13,6 +13,7 @@ namespace Zejji.Entity
         ///
         /// Otherwise returns null.
         /// </summary>
-        TDbContext? Get<TDbContext>() where TDbContext : DbContext;
+        TDbContext? Get<TDbContext>()
+            where TDbContext : DbContext;
     }
 }

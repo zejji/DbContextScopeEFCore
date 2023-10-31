@@ -6,7 +6,8 @@ namespace Zejji.Tests.Helpers
 {
     internal class SqliteMemoryDatabaseLifetimeManager : IDisposable
     {
-        public readonly string ConnectionString = $"DataSource={Guid.NewGuid()};mode=memory;cache=shared";
+        public readonly string ConnectionString =
+            $"DataSource={Guid.NewGuid()};mode=memory;cache=shared";
 
         private DbConnection? _keepAliveConnection;
 

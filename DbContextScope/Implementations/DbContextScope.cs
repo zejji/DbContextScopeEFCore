@@ -21,18 +21,33 @@ namespace Zejji.Entity
 
         public IDbContextCollection DbContexts => _dbContexts;
 
-        public DbContextScope(IDbContextFactory? dbContextFactory = null) :
-            this(joiningOption: DbContextScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbContextFactory: dbContextFactory)
-        { }
+        public DbContextScope(IDbContextFactory? dbContextFactory = null)
+            : this(
+                joiningOption: DbContextScopeOption.JoinExisting,
+                readOnly: false,
+                isolationLevel: null,
+                dbContextFactory: dbContextFactory
+            ) { }
 
         public DbContextScope(bool readOnly, IDbContextFactory? dbContextFactory = null)
-            : this(joiningOption: DbContextScopeOption.JoinExisting, readOnly: readOnly, isolationLevel: null, dbContextFactory: dbContextFactory)
-        { }
+            : this(
+                joiningOption: DbContextScopeOption.JoinExisting,
+                readOnly: readOnly,
+                isolationLevel: null,
+                dbContextFactory: dbContextFactory
+            ) { }
 
-        public DbContextScope(DbContextScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel, IDbContextFactory? dbContextFactory = null)
+        public DbContextScope(
+            DbContextScopeOption joiningOption,
+            bool readOnly,
+            IsolationLevel? isolationLevel,
+            IDbContextFactory? dbContextFactory = null
+        )
         {
             if (isolationLevel.HasValue && joiningOption == DbContextScopeOption.JoinExisting)
-                throw new ArgumentException($"Cannot join an ambient {nameof(DbContextScope)} when an explicit database transaction is required. When requiring explicit database transactions to be used (i.e. when the '{nameof(isolationLevel)}' parameter is set), you must not also ask to join the ambient context.");
+                throw new ArgumentException(
+                    $"Cannot join an ambient {nameof(DbContextScope)} when an explicit database transaction is required. When requiring explicit database transactions to be used (i.e. when the '{nameof(isolationLevel)}' parameter is set), you must not also ask to join the ambient context."
+                );
 
             _disposed = false;
             _completed = false;
@@ -43,7 +58,9 @@ namespace Zejji.Entity
             {
                 if (_parentScope._readOnly && !this._readOnly)
                 {
-                    throw new InvalidOperationException($"Cannot nest a read/write {nameof(DbContextScope)} within a read-only {nameof(DbContextScope)}.");
+                    throw new InvalidOperationException(
+                        $"Cannot nest a read/write {nameof(DbContextScope)} within a read-only {nameof(DbContextScope)}."
+                    );
                 }
 
                 _nested = true;
@@ -63,7 +80,9 @@ namespace Zejji.Entity
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextScope));
             if (_completed)
-                throw new InvalidOperationException($"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction.");
+                throw new InvalidOperationException(
+                    $"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction."
+                );
 
             // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
@@ -88,7 +107,9 @@ namespace Zejji.Entity
             if (_disposed)
                 throw new ObjectDisposedException(nameof(DbContextScope));
             if (_completed)
-                throw new InvalidOperationException($"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction.");
+                throw new InvalidOperationException(
+                    $"You cannot call {nameof(SaveChanges)}() more than once on a {nameof(DbContextScope)}. A {nameof(DbContextScope)} is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call {nameof(SaveChanges)}() at the end. Calling {nameof(SaveChanges)}() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own {nameof(DbContextScope)} and each implement a single business transaction."
+                );
 
             // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
@@ -152,13 +173,16 @@ namespace Zejji.Entity
             }
         }
 
-        private IEnumerable<EntityEntry> GetEntitiesInParentScopeToRefreshInternal(IEnumerable entities)
+        private IEnumerable<EntityEntry> GetEntitiesInParentScopeToRefreshInternal(
+            IEnumerable entities
+        )
         {
             foreach (var contextInCurrentScope in _dbContexts.InitializedDbContexts.Values)
             {
                 var correspondingParentContext =
-                    _parentScope?._dbContexts.InitializedDbContexts.Values.SingleOrDefault(parentContext =>
-                        parentContext.GetType() == contextInCurrentScope.GetType());
+                    _parentScope?._dbContexts.InitializedDbContexts.Values.SingleOrDefault(
+                        parentContext => parentContext.GetType() == contextInCurrentScope.GetType()
+                    );
 
                 if (correspondingParentContext == null)
                     continue; // No DbContext of this type has been created in the parent scope yet. So no need to refresh anything for this DbContext type.
@@ -183,31 +207,49 @@ namespace Zejji.Entity
 
                         // Get the primary key properties.
                         // Note that entities may have composite primary keys.
-                        var primaryKeyProperties = stateInCurrentScope.Metadata?.FindPrimaryKey()?.Properties.ToArray();
+                        var primaryKeyProperties = stateInCurrentScope.Metadata
+                            ?.FindPrimaryKey()
+                            ?.Properties.ToArray();
 
                         if (primaryKeyProperties == null || primaryKeyProperties.Length == 0)
                         {
                             throw new InvalidOperationException(
-                                $"Cannot refresh entities in parent scope as no primary key was found for {entityType}");
+                                $"Cannot refresh entities in parent scope as no primary key was found for {entityType}"
+                            );
                         }
 
                         // Create a map of primary key name(s) to their value(s).
                         var primaryKeyValues = primaryKeyProperties
-                            .Select(p => new KeyValuePair<string, object?>(p.Name, entityType.GetProperty(p.Name)?.GetValue(stateInCurrentScope.Entity)))
+                            .Select(
+                                p =>
+                                    new KeyValuePair<string, object?>(
+                                        p.Name,
+                                        entityType
+                                            .GetProperty(p.Name)
+                                            ?.GetValue(stateInCurrentScope.Entity)
+                                    )
+                            )
                             .ToArray();
 
                         // Look for the corresponding entry in the parent context.
                         // First filter by entity type.
-                        var source = from e in correspondingParentContext.ChangeTracker.Entries()
-                                     where e.Entity.GetType() == stateInCurrentScope.Entity.GetType()
-                                     select e;
+                        var source =
+                            from e in correspondingParentContext.ChangeTracker.Entries()
+                            where e.Entity.GetType() == stateInCurrentScope.Entity.GetType()
+                            select e;
 
                         // Then look for an entity which has matching primary key values.
                         foreach (var primaryKeyNameAndValue in primaryKeyValues)
                         {
-                            source = from e in source
-                                     where e.Entity.GetType().GetProperty(primaryKeyNameAndValue.Key)?.GetValue(e.Entity)?.Equals(primaryKeyNameAndValue.Value) ?? false
-                                     select e;
+                            source =
+                                from e in source
+                                where
+                                    e.Entity
+                                        .GetType()
+                                        .GetProperty(primaryKeyNameAndValue.Key)
+                                        ?.GetValue(e.Entity)
+                                        ?.Equals(primaryKeyNameAndValue.Value) ?? false
+                                select e;
                         }
 
                         var entityEntry = source.SingleOrDefault();
@@ -261,7 +303,9 @@ namespace Zejji.Entity
             // Pop ourself from the ambient scope stack
             var currentAmbientScope = GetAmbientScope();
             if (currentAmbientScope != this) // This is a serious programming error. Worth throwing here.
-                throw new InvalidOperationException($"{nameof(DbContextScope)} instances must be disposed of in the order in which they were created!");
+                throw new InvalidOperationException(
+                    $"{nameof(DbContextScope)} instances must be disposed of in the order in which they were created!"
+                );
 
             RemoveAmbientScope();
 
@@ -304,7 +348,8 @@ namespace Zejji.Entity
                      * So just record a warning here. Hopefully someone will see it and will fix the code.
                      */
 
-                    var message = @$"PROGRAMMING ERROR - When attempting to dispose a {nameof(DbContextScope)}, we found that our parent {nameof(DbContextScope)} has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a {nameof(DbContextScope)} without suppressing the ambient context first.
+                    var message =
+                        @$"PROGRAMMING ERROR - When attempting to dispose a {nameof(DbContextScope)}, we found that our parent {nameof(DbContextScope)} has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a {nameof(DbContextScope)} without suppressing the ambient context first.
 
 In order to fix this:
 1) Look at the stack trace below - this is the stack trace of the parallel task in question.
@@ -323,7 +368,6 @@ Stack Trace:
             }
 
             _disposed = true;
-
         }
 
         #region Ambient Context Logic
@@ -353,7 +397,7 @@ Stack Trace:
          * we could just store our DbContextScope instances in a ThreadStatic
          * variable. That's the "traditional" (i.e. pre-async) way of implementing
          * an ambient context in .NET. You can see an example implementation of
-         * a ThreadStatic-based ambient DbContext here: http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/ 
+         * a ThreadStatic-based ambient DbContext here: http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/
          *
          * But that would be hugely limiting as it would prevent us from being
          * able to use the new async features added to Entity Framework
@@ -412,4 +456,3 @@ Stack Trace:
         #endregion
     }
 }
-
