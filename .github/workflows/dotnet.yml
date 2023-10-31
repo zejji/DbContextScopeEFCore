@@ -15,9 +15,8 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: |
-          8.0.x
-        include-prerelease: true
+        dotnet-version: '8.0.x'
+        dotnet-quality: 'preview'
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -36,8 +35,8 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0.100-rc.2'
-        include-prerelease: true
+        dotnet-version: '8.0.x'
+        dotnet-quality: 'preview'
     - name: Restore dependencies
       run: dotnet restore
     - name: Build NuGet
