@@ -1,3 +1,4 @@
+using DbContextScope.Exceptions;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -60,10 +61,23 @@ public sealed class DbContextScopeTests : IDisposable
     }
 
     [Fact]
+    public void Calling_GetRequired_on_an_AmbientDbContextLocator_outside_of_an_ambient_scope_should_throw()
+    {
+        var ex = Record.Exception(() =>
+        {
+            var contextLocator = new AmbientDbContextLocator();
+            contextLocator.GetRequired<TestDbContext>();
+        });
+
+        ex.Should().NotBeNull();
+        ex.Should().BeOfType<NoAmbientDbContextScopeException>();
+    }
+
+    [Fact]
     public void Calling_SaveChanges_on_a_nested_scope_has_no_effect()
     {
-        var originalName = "Test User";
-        var newName = "New name";
+        const string originalName = "Test User";
+        const string newName = "New name";
 
         // Arrange - add one user to the database
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
@@ -95,8 +109,8 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Calling_SaveChanges_on_the_outer_scope_saves_changes()
     {
-        var originalName = "Test User";
-        var newName = "New name";
+        const string originalName = "Test User";
+        const string newName = "New name";
 
         // Arrange - add one user to the database
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
@@ -134,7 +148,10 @@ public sealed class DbContextScopeTests : IDisposable
             dbContextScope.SaveChanges();
 
             // Act - call SaveChanges again
-            var ex = Record.Exception(() => dbContextScope.SaveChanges());
+            var ex = Record.Exception(() =>
+            {
+                dbContextScope.SaveChanges();
+            });
 
             // Assert - an InvalidOperationException should have been thrown
             ex.Should().NotBeNull();
@@ -145,9 +162,9 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void SaveChanges_can_be_called_again_after_a_DbUpdateConcurrencyException()
     {
-        var originalName = "Test User";
-        var newName1 = "New name 1";
-        var newName2 = "New name 2";
+        const string originalName = "Test User";
+        const string newName1 = "New name 1";
+        const string newName2 = "New name 2";
 
         // Arrange - add one user to the database
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
@@ -229,8 +246,7 @@ public sealed class DbContextScopeTests : IDisposable
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
             );
             var saveChangesMethod = publicMethods
-                .Where(m => m.Name == "SaveChanges")
-                .SingleOrDefault();
+                .SingleOrDefault(m => m.Name == "SaveChanges");
             saveChangesMethod.Should().BeNull();
         }
     }
@@ -276,20 +292,17 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void RefreshEntitiesInParentScope_should_reload_changed_data_from_database()
     {
-        var originalName1 = "Test User 1";
-        var originalName2 = "Test User 2";
-        var newName1 = "New name 1";
-        var newName2 = "New name 2";
+        const string originalName1 = "Test User 1";
+        const string originalName2 = "Test User 2";
+        const string newName1 = "New name 1";
+        const string newName2 = "New name 2";
 
         // Arrange - add two users to the database
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
         {
             dbContext.Users.AddRange(
-                new User[]
-                {
-                    new User { Name = originalName1 },
-                    new User { Name = originalName2 }
-                }
+                new User { Name = originalName1 },
+                new User { Name = originalName2 }
             );
             dbContext.SaveChanges();
         }
@@ -340,27 +353,22 @@ public sealed class DbContextScopeTests : IDisposable
         using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
         {
             dbContext.Users.AddRange(
-                new User[]
+                new()
                 {
-                    new User
+                    Name = "Test User 1",
+                    CoursesUsers = new CourseUser[]
                     {
-                        Name = "Test User 1",
-                        CoursesUsers = new CourseUser[]
-                        {
-                            new CourseUser { Course = course1, Grade = "A" },
-                            new CourseUser { Course = course2, Grade = "C" }
-                        }
-                    },
-                    new User
-                    {
-                        Name = "Test User 2",
-                        CoursesUsers = new CourseUser[]
-                        {
-                            new CourseUser { Course = course1, Grade = "F" }
-                        }
+                        new() { Course = course1, Grade = "A" },
+                        new() { Course = course2, Grade = "C" }
                     }
-                }
-            );
+                }, new()
+                {
+                    Name = "Test User 2",
+                    CoursesUsers = new CourseUser[]
+                    {
+                        new() { Course = course1, Grade = "F" }
+                    }
+                });
             dbContext.SaveChanges();
         }
 

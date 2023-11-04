@@ -35,7 +35,7 @@ namespace Zejji.Entity
             if (!isTypeRegistered)
             {
                 throw new InvalidOperationException(
-                    $"{typeof(TDbContext).Name} was not registered with the {typeof(RegisteredDbContextFactory).Name} instance. Make sure you call {nameof(RegisterDbContextType)}."
+                    $"{typeof(TDbContext).Name} was not registered with the {nameof(RegisteredDbContextFactory)} instance. Make sure you call {nameof(RegisterDbContextType)}."
                 );
             }
 
