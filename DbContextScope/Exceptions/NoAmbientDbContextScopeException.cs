@@ -8,17 +8,11 @@ using System;
 /// </summary>
 public class NoAmbientDbContextScopeException : Exception
 {
-    public NoAmbientDbContextScopeException()
-    {
-    }
+    public NoAmbientDbContextScopeException() { }
 
     public NoAmbientDbContextScopeException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     public NoAmbientDbContextScopeException(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+        : base(message, inner) { }
 }

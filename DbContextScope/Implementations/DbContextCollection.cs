@@ -10,48 +10,29 @@ using System.Threading.Tasks;
 namespace Zejji.Entity
 {
     /// <summary>
-    /// As its name suggests, DbContextCollection maintains a collection of DbContext instances.
+    /// As its name suggests, <see cref="DbContextCollection"/> maintains a collection of <see cref="DbContext"/> instances.
     ///
     /// What it does in a nutshell:
-    /// - Lazily instantiates DbContext instances when its Get Of TDbContext () method is called
+    /// - Lazily instantiates <see cref="DbContext"/> instances when its <see cref="DbContextCollection.Get{TDbContext}()"/> method is called
     /// (and optionally starts an explicit database transaction).
-    /// - Keeps track of the DbContext instances it created so that it can return the existing
-    /// instance when asked for a DbContext of a specific type.
-    /// - Takes care of committing / rolling back changes and transactions on all the DbContext
-    /// instances it created when its Commit() or Rollback() method is called.
+    /// - Keeps track of the <see cref="DbContext"/> instances it created so that it can return the existing
+    /// instance when asked for a <see cref="DbContext"/> of a specific type.
+    /// - Takes care of committing / rolling back changes and transactions on all the <see cref="DbContext"/>
+    /// instances it created when its <see cref="DbContextCollection.Commit()"/> or <see cref="DbContextCollection.Rollback()"/> method is called.
     ///
     /// </summary>
-    public class DbContextCollection : IDbContextCollection
+    public class DbContextCollection(
+        bool readOnly = false,
+        IsolationLevel? isolationLevel = null,
+        IDbContextFactory? dbContextFactory = null
+    ) : IDbContextCollection
     {
-        private Dictionary<Type, DbContext> _initializedDbContexts;
-        private Dictionary<DbContext, IDbContextTransaction> _transactions;
-        private readonly IsolationLevel? _isolationLevel;
-        private readonly IDbContextFactory? _dbContextFactory;
-        private bool _disposed;
-        private bool _completed;
-        private readonly bool _readOnly;
+        private readonly Dictionary<Type, DbContext> _initializedDbContexts = new();
+        private readonly Dictionary<DbContext, IDbContextTransaction> _transactions = new();
+        private bool _disposed = false;
+        private bool _completed = false;
 
-        internal Dictionary<Type, DbContext> InitializedDbContexts
-        {
-            get { return _initializedDbContexts; }
-        }
-
-        public DbContextCollection(
-            bool readOnly = false,
-            IsolationLevel? isolationLevel = null,
-            IDbContextFactory? dbContextFactory = null
-        )
-        {
-            _disposed = false;
-            _completed = false;
-
-            _initializedDbContexts = new Dictionary<Type, DbContext>();
-            _transactions = new Dictionary<DbContext, IDbContextTransaction>();
-
-            _readOnly = readOnly;
-            _isolationLevel = isolationLevel;
-            _dbContextFactory = dbContextFactory;
-        }
+        internal Dictionary<Type, DbContext> InitializedDbContexts => _initializedDbContexts;
 
         public TDbContext Get<TDbContext>()
             where TDbContext : DbContext
@@ -66,20 +47,20 @@ namespace Zejji.Entity
                 // First time we've been asked for this particular DbContext type.
                 // Create one, cache it and start its database transaction if needed.
                 TDbContext dbContext =
-                    _dbContextFactory != null
-                        ? _dbContextFactory.CreateDbContext<TDbContext>()
+                    dbContextFactory != null
+                        ? dbContextFactory.CreateDbContext<TDbContext>()
                         : Activator.CreateInstance<TDbContext>();
 
                 _initializedDbContexts.Add(requestedType, dbContext);
 
-                if (_readOnly)
+                if (readOnly)
                 {
                     dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
                 }
 
-                if (_isolationLevel.HasValue)
+                if (isolationLevel.HasValue)
                 {
-                    var tran = dbContext.Database.BeginTransaction(_isolationLevel.Value);
+                    var tran = dbContext.Database.BeginTransaction(isolationLevel.Value);
                     _transactions.Add(dbContext, tran);
                 }
             }
@@ -120,7 +101,7 @@ namespace Zejji.Entity
             {
                 try
                 {
-                    if (!_readOnly)
+                    if (!readOnly)
                     {
                         c += dbContext.SaveChanges();
                     }
@@ -171,7 +152,7 @@ namespace Zejji.Entity
             {
                 try
                 {
-                    if (!_readOnly)
+                    if (!readOnly)
                     {
                         c += await dbContext.SaveChangesAsync(cancelToken).ConfigureAwait(false);
                     }
@@ -253,7 +234,7 @@ namespace Zejji.Entity
             {
                 try
                 {
-                    if (_readOnly)
+                    if (readOnly)
                         Commit();
                     else
                         Rollback();
@@ -282,12 +263,15 @@ namespace Zejji.Entity
 
         /// <summary>
         /// Returns the value associated with the specified key or the default
-        /// value for the TValue  type.
+        /// value for the <typeparamref name="TValue"/> type.
         /// </summary>
+        /// <typeparam name="TKey">The type of the lookup key.</typeparam>
+        /// <typeparam name="TValue">The type of the value stored in the dictionary.</typeparam>
         private static TValue? GetValueOrDefault<TKey, TValue>(
-            IDictionary<TKey, TValue> dictionary,
+            Dictionary<TKey, TValue> dictionary,
             TKey key
         )
+            where TKey : notnull
         {
             return dictionary.TryGetValue(key, out var value) ? value : default;
         }

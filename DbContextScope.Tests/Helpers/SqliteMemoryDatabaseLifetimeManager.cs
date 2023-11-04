@@ -36,7 +36,8 @@ namespace Zejji.Tests.Helpers
 
         private void Dispose(bool disposing)
         {
-            if (_keepAliveConnection == null) return;
+            if (_keepAliveConnection == null)
+                return;
 
             _keepAliveConnection.Dispose();
             _keepAliveConnection = null;

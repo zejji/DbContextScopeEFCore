@@ -16,7 +16,7 @@ namespace Zejji.Entity
         /// </summary>
         TDbContext? Get<TDbContext>()
             where TDbContext : DbContext;
-        
+
         /// <summary>
         /// If called within the scope of a <see cref="DbContextScope"/>, gets or creates
         /// the ambient <see cref="DbContext"/> instance for the provided <see cref="DbContext"/> type.

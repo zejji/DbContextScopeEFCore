@@ -1,16 +1,18 @@
-﻿namespace Zejji.Entity
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Zejji.Entity
 {
     /// <summary>
-    /// Indicates whether or not a new DbContextScope will join the ambient scope.
+    /// Indicates whether or not a new <see cref="DbContextScope"/> will join the ambient scope.
     /// </summary>
     public enum DbContextScopeOption
     {
         /// <summary>
-        /// Join the ambient DbContextScope if one exists. Creates a new
+        /// Join the ambient <see cref="DbContextScope"/> if one exists. Creates a new
         /// one otherwise.
         ///
         /// This is what you want in most cases. Joining the existing ambient scope
-        /// ensures that all code within a business transaction uses the same DbContext
+        /// ensures that all code within a business transaction uses the same <see cref="DbContext"/>
         /// instance and that all changes made by service methods called within that
         /// business transaction are either committed or rolled back atomically when the top-level
         /// scope completes (i.e. it ensures that there are no partial commits).
@@ -18,17 +20,17 @@
         JoinExisting,
 
         /// <summary>
-        /// Ignore the ambient DbContextScope (if any) and force the creation of
-        /// a new DbContextScope.
+        /// Ignore the ambient <see cref="DbContextScope"/> (if any) and force the creation of
+        /// a new <see cref="DbContextScope"/>.
         ///
         /// This is an advanced feature that should be used with great care.
         ///
-        /// When forcing the creation of a new scope, new DbContext instances will be
-        /// created within that inner scope instead of re-using the DbContext instances that
+        /// When forcing the creation of a new scope, new <see cref="DbContext"/> instances will be
+        /// created within that inner scope instead of re-using the <see cref="DbContext"/> instances that
         /// the parent scope (if any) is using.
         ///
         /// Any changes made to entities within that inner scope will therefore get persisted
-        /// to the database when SaveChanges() is called in the inner scope regardless of whether
+        /// to the database when <see cref="DbContextScope.SaveChanges()"/> is called in the inner scope regardless of whether
         /// or not the parent scope is successful.
         ///
         /// You would typically do this to ensure that the changes made within the inner scope

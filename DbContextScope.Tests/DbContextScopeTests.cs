@@ -245,8 +245,7 @@ public sealed class DbContextScopeTests : IDisposable
             var publicMethods = type.GetMethods(
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
             );
-            var saveChangesMethod = publicMethods
-                .SingleOrDefault(m => m.Name == "SaveChanges");
+            var saveChangesMethod = publicMethods.SingleOrDefault(m => m.Name == "SaveChanges");
             saveChangesMethod.Should().BeNull();
         }
     }
@@ -361,14 +360,16 @@ public sealed class DbContextScopeTests : IDisposable
                         new() { Course = course1, Grade = "A" },
                         new() { Course = course2, Grade = "C" }
                     }
-                }, new()
+                },
+                new()
                 {
                     Name = "Test User 2",
                     CoursesUsers = new CourseUser[]
                     {
                         new() { Course = course1, Grade = "F" }
                     }
-                });
+                }
+            );
             dbContext.SaveChanges();
         }
 

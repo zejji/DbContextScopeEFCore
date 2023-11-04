@@ -4,7 +4,7 @@ using System;
 namespace Zejji.Entity
 {
     /// <summary>
-    /// A factory to create DbContext instances.
+    /// A factory to create <see cref="DbContext"/> instances.
     /// </summary>
     /// <remarks>
     /// It should be registered in a dependency injection container as a singleton.
