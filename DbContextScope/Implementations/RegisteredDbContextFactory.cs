@@ -4,7 +4,7 @@ using System;
 namespace Zejji.Entity
 {
     /// <summary>
-    /// A factory to create DbContext instances.
+    /// A factory to create <see cref="DbContext"/> instances.
     /// </summary>
     /// <remarks>
     /// It should be registered in a dependency injection container as a singleton.
@@ -35,7 +35,7 @@ namespace Zejji.Entity
             if (!isTypeRegistered)
             {
                 throw new InvalidOperationException(
-                    $"{typeof(TDbContext).Name} was not registered with the {typeof(RegisteredDbContextFactory).Name} instance. Make sure you call {nameof(RegisterDbContextType)}."
+                    $"{typeof(TDbContext).Name} was not registered with the {nameof(RegisteredDbContextFactory)} instance. Make sure you call {nameof(RegisterDbContextType)}."
                 );
             }
 

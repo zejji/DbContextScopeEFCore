@@ -2,9 +2,19 @@
 
 namespace Zejji.Entity
 {
-    public class DbContextReadOnlyScope : IDbContextReadOnlyScope
+    public class DbContextReadOnlyScope(
+        DbContextScopeOption joiningOption,
+        IsolationLevel? isolationLevel,
+        IDbContextFactory? dbContextFactory = null
+    ) : IDbContextReadOnlyScope
     {
-        private DbContextScope _internalScope;
+        private readonly DbContextScope _internalScope =
+            new(
+                joiningOption: joiningOption,
+                readOnly: true,
+                isolationLevel: isolationLevel,
+                dbContextFactory: dbContextFactory
+            );
 
         public IDbContextCollection DbContexts => _internalScope.DbContexts;
 
@@ -24,20 +34,6 @@ namespace Zejji.Entity
                 isolationLevel: isolationLevel,
                 dbContextFactory: dbContextFactory
             ) { }
-
-        public DbContextReadOnlyScope(
-            DbContextScopeOption joiningOption,
-            IsolationLevel? isolationLevel,
-            IDbContextFactory? dbContextFactory = null
-        )
-        {
-            _internalScope = new DbContextScope(
-                joiningOption: joiningOption,
-                readOnly: true,
-                isolationLevel: isolationLevel,
-                dbContextFactory: dbContextFactory
-            );
-        }
 
         public void Dispose()
         {

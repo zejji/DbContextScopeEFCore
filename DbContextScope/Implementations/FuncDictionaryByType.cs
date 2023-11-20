@@ -14,7 +14,7 @@ namespace Zejji.Entity
         /// <summary>
         /// Maps the specified type argument to the given function. If
         /// the type argument already has a value within the dictionary,
-        /// ArgumentException is thrown.
+        /// <see cref="ArgumentException" /> is thrown.
         /// </summary>
         public void Add<T>(Func<T> func)
         {
@@ -23,7 +23,7 @@ namespace Zejji.Entity
 
         /// <summary>
         /// Attempts to fetch a function from the dictionary, returning false and
-        /// setting the output parameter to the default value for Func&lt;T&gt; if it
+        /// setting the output parameter to the default value for <see cref="Func{T}"/> if it
         /// fails, or returning true and setting the output parameter to the
         /// fetched function if it succeeds.
         /// </summary>
