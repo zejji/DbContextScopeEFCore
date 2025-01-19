@@ -8,13 +8,12 @@ namespace Zejji.Entity
         IDbContextFactory? dbContextFactory = null
     ) : IDbContextReadOnlyScope
     {
-        private readonly DbContextScope _internalScope =
-            new(
-                joiningOption: joiningOption,
-                readOnly: true,
-                isolationLevel: isolationLevel,
-                dbContextFactory: dbContextFactory
-            );
+        private readonly DbContextScope _internalScope = new(
+            joiningOption: joiningOption,
+            readOnly: true,
+            isolationLevel: isolationLevel,
+            dbContextFactory: dbContextFactory
+        );
 
         public IDbContextCollection DbContexts => _internalScope.DbContexts;
 

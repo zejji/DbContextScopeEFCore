@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <PackageId>Zejji.DbContextScope.EFCore</PackageId>
-    <Version>8.0.100.1</Version>
+    <Version>9.0.1.0</Version>
     <Authors>Mehdi El Gueddari;Gerard Howell</Authors>
     <PackageTags>DbContextScope;DbContext;EF;EFCore;EntityFramework;EntityFrameworkCore;UnitOfWork;AmbientDbContext;AmbientContext;RepositoryPattern</PackageTags>
     <Description>A library for managing the lifetime of Entity Framework Core DbContext instances. This package is based on the original DbContextScope repository by Mehdi El Gueddari, updated for .NET 6+ and EF Core, with a number of additional improvements and bug fixes.</Description>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/zejji/DbContextScopeEFCore</RepositoryUrl>
-    <Copyright>Copyright (c) 2014 Mehdi El Gueddari; (c) 2023 Gerard Howell</Copyright>
+    <Copyright>Copyright (c) 2014 Mehdi El Gueddari; (c) 2025 Gerard Howell</Copyright>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
@@ -22,8 +22,8 @@
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="" />
     <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 

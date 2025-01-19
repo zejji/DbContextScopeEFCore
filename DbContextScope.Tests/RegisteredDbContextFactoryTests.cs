@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
-using System;
+using Shouldly;
 using Xunit;
 using Zejji.Entity;
 using Zejji.Tests.Helpers;
@@ -52,24 +52,24 @@ namespace Zejji.Tests
             var emptyDbContext = _dbContextFactory.CreateDbContext<EmptyDbContext>();
 
             // Assert
-            testDbContextFactoryCallCount.Should().Be(2);
-            emptyDbContextFactoryCallCount.Should().Be(1);
+            testDbContextFactoryCallCount.ShouldBe(2);
+            emptyDbContextFactoryCallCount.ShouldBe(1);
 
-            testDbContext1.Should().NotBeNull();
-            testDbContext2.Should().NotBeNull();
-            emptyDbContext.Should().NotBeNull();
+            testDbContext1.ShouldNotBeNull();
+            testDbContext2.ShouldNotBeNull();
+            emptyDbContext.ShouldNotBeNull();
 
-            testDbContext1.Should().NotBeSameAs(testDbContext2);
+            testDbContext1.ShouldNotBeSameAs(testDbContext2);
 
-            var testDbContext1ConnectionString = testDbContext1.Database
-                .GetDbConnection()
+            var testDbContext1ConnectionString = testDbContext1
+                .Database.GetDbConnection()
                 .ConnectionString;
-            testDbContext1ConnectionString.Should().Be(connectionString);
+            testDbContext1ConnectionString.ShouldBe(connectionString);
 
-            var testDbContext2ConnectionString = testDbContext2.Database
-                .GetDbConnection()
+            var testDbContext2ConnectionString = testDbContext2
+                .Database.GetDbConnection()
                 .ConnectionString;
-            testDbContext2ConnectionString.Should().Be(connectionString);
+            testDbContext2ConnectionString.ShouldBe(connectionString);
         }
     }
 }

@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Zejji.Entity
 {
@@ -207,8 +207,8 @@ namespace Zejji.Entity
 
                         // Get the primary key properties.
                         // Note that entities may have composite primary keys.
-                        var primaryKeyProperties = stateInCurrentScope.Metadata
-                            ?.FindPrimaryKey()
+                        var primaryKeyProperties = stateInCurrentScope
+                            .Metadata?.FindPrimaryKey()
                             ?.Properties.ToArray();
 
                         if (primaryKeyProperties == null || primaryKeyProperties.Length == 0)
@@ -220,15 +220,10 @@ namespace Zejji.Entity
 
                         // Create a map of primary key name(s) to their value(s).
                         var primaryKeyValues = primaryKeyProperties
-                            .Select(
-                                p =>
-                                    new KeyValuePair<string, object?>(
-                                        p.Name,
-                                        entityType
-                                            .GetProperty(p.Name)
-                                            ?.GetValue(stateInCurrentScope.Entity)
-                                    )
-                            )
+                            .Select(p => new KeyValuePair<string, object?>(
+                                p.Name,
+                                entityType.GetProperty(p.Name)?.GetValue(stateInCurrentScope.Entity)
+                            ))
                             .ToArray();
 
                         // Look for the corresponding entry in the parent context.
@@ -244,8 +239,7 @@ namespace Zejji.Entity
                             source =
                                 from e in source
                                 where
-                                    e.Entity
-                                        .GetType()
+                                    e.Entity.GetType()
                                         .GetProperty(primaryKeyNameAndValue.Key)
                                         ?.GetValue(e.Entity)
                                         ?.Equals(primaryKeyNameAndValue.Value) ?? false
