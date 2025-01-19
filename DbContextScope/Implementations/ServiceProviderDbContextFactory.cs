@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace Zejji.Entity;
 
@@ -11,8 +11,7 @@ namespace Zejji.Entity;
 /// <remarks>
 /// It should be registered in a dependency injection container as a singleton.
 /// </remarks>
-public class ServiceProviderDbContextFactory(IServiceProvider serviceProvider)
-    : IDbContextFactory
+public class ServiceProviderDbContextFactory(IServiceProvider serviceProvider) : IDbContextFactory
 {
     public TDbContext CreateDbContext<TDbContext>()
         where TDbContext : DbContext

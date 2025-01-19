@@ -125,5 +125,8 @@ dotnet_diagnostic.SA1633.severity = none
 # IDE0063: Use simple 'using' statement
 dotnet_diagnostic.IDE0063.severity = none
 
+# IDE0300: Collection initialization can be simplified
+dotnet_diagnostic.IDE0300.severity = none
+
 # SA1009: Closing parenthesis should be spaced correctly
 dotnet_diagnostic.SA1009.severity = none

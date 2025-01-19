@@ -39,6 +39,6 @@ namespace Zejji.Entity
         /// cannot be rolled back or to persist audit or log entries that must not be rolled back
         /// regardless of the outcome of the business transaction).
         /// </summary>
-        ForceCreateNew
+        ForceCreateNew,
     }
 }

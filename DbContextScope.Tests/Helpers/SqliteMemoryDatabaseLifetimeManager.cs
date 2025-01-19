@@ -1,6 +1,6 @@
-﻿using Microsoft.Data.Sqlite;
-using System;
+﻿using System;
 using System.Data.Common;
+using Microsoft.Data.Sqlite;
 
 namespace Zejji.Tests.Helpers
 {

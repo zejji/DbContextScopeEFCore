@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Zejji.Entity
 {
