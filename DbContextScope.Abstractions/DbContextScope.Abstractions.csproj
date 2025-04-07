@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
-    <PackageId>Zejji.DbContextScope.EFCore</PackageId>
+    <PackageId>Zejji.DbContextScope.EFCore.Abstractions</PackageId>
     <Version>9.0.1.0</Version>
     <Authors>Mehdi El Gueddari;Gerard Howell</Authors>
     <PackageTags>DbContextScope;DbContext;EF;EFCore;EntityFramework;EntityFrameworkCore;UnitOfWork;AmbientDbContext;AmbientContext;RepositoryPattern</PackageTags>
@@ -17,18 +17,12 @@
     <IncludeSymbols>true</IncludeSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <RootNamespace>Zejji.Entity</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="" />
     <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.1" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DbContextScope.Abstractions\DbContextScope.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

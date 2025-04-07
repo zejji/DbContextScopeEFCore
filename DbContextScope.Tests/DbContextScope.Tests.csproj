@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
+    <RootNamespace>Zejji.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

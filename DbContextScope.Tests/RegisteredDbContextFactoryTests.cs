@@ -6,70 +6,69 @@ using Zejji.Entity;
 using Zejji.Tests.Helpers;
 using Zejji.Tests.Models;
 
-namespace Zejji.Tests
+namespace Zejji.Tests;
+
+public sealed class RegisteredDbContextFactoryTests : IDisposable
 {
-    public sealed class RegisteredDbContextFactoryTests : IDisposable
+    private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
+    private readonly RegisteredDbContextFactory _dbContextFactory;
+
+    public RegisteredDbContextFactoryTests()
     {
-        private readonly SqliteMemoryDatabaseLifetimeManager _databaseManager;
-        private readonly RegisteredDbContextFactory _dbContextFactory;
+        // Create a SQLite in-memory database which will last the duration of the test
+        _databaseManager = new SqliteMemoryDatabaseLifetimeManager();
 
-        public RegisteredDbContextFactoryTests()
+        _dbContextFactory = new RegisteredDbContextFactory();
+    }
+
+    public void Dispose()
+    {
+        _databaseManager.Dispose();
+    }
+
+    [Fact]
+    public void RegisteredDbContextFactory_should_call_registered_factory_function_for_type()
+    {
+        var connectionString = _databaseManager.ConnectionString;
+        var testDbContextFactoryCallCount = 0;
+        var emptyDbContextFactoryCallCount = 0;
+
+        // Arrange - register factory functions for the TestDbContext and EmptyDbContext types
+        _dbContextFactory.RegisterDbContextType<TestDbContext>(() =>
         {
-            // Create a SQLite in-memory database which will last the duration of the test
-            _databaseManager = new SqliteMemoryDatabaseLifetimeManager();
+            testDbContextFactoryCallCount += 1;
+            return new TestDbContext(connectionString);
+        });
 
-            _dbContextFactory = new RegisteredDbContextFactory();
-        }
-
-        public void Dispose()
+        _dbContextFactory.RegisterDbContextType<EmptyDbContext>(() =>
         {
-            _databaseManager.Dispose();
-        }
+            emptyDbContextFactoryCallCount += 1;
+            return new EmptyDbContext();
+        });
 
-        [Fact]
-        public void RegisteredDbContextFactory_should_call_registered_factory_function_for_type()
-        {
-            var connectionString = _databaseManager.ConnectionString;
-            var testDbContextFactoryCallCount = 0;
-            var emptyDbContextFactoryCallCount = 0;
+        // Act - ask the factory for some DbContexts
+        var testDbContext1 = _dbContextFactory.CreateDbContext<TestDbContext>();
+        var testDbContext2 = _dbContextFactory.CreateDbContext<TestDbContext>();
+        var emptyDbContext = _dbContextFactory.CreateDbContext<EmptyDbContext>();
 
-            // Arrange - register factory functions for the TestDbContext and EmptyDbContext types
-            _dbContextFactory.RegisterDbContextType<TestDbContext>(() =>
-            {
-                testDbContextFactoryCallCount += 1;
-                return new TestDbContext(connectionString);
-            });
+        // Assert
+        testDbContextFactoryCallCount.ShouldBe(2);
+        emptyDbContextFactoryCallCount.ShouldBe(1);
 
-            _dbContextFactory.RegisterDbContextType<EmptyDbContext>(() =>
-            {
-                emptyDbContextFactoryCallCount += 1;
-                return new EmptyDbContext();
-            });
+        testDbContext1.ShouldNotBeNull();
+        testDbContext2.ShouldNotBeNull();
+        emptyDbContext.ShouldNotBeNull();
 
-            // Act - ask the factory for some DbContexts
-            var testDbContext1 = _dbContextFactory.CreateDbContext<TestDbContext>();
-            var testDbContext2 = _dbContextFactory.CreateDbContext<TestDbContext>();
-            var emptyDbContext = _dbContextFactory.CreateDbContext<EmptyDbContext>();
+        testDbContext1.ShouldNotBeSameAs(testDbContext2);
 
-            // Assert
-            testDbContextFactoryCallCount.ShouldBe(2);
-            emptyDbContextFactoryCallCount.ShouldBe(1);
+        var testDbContext1ConnectionString = testDbContext1
+            .Database.GetDbConnection()
+            .ConnectionString;
+        testDbContext1ConnectionString.ShouldBe(connectionString);
 
-            testDbContext1.ShouldNotBeNull();
-            testDbContext2.ShouldNotBeNull();
-            emptyDbContext.ShouldNotBeNull();
-
-            testDbContext1.ShouldNotBeSameAs(testDbContext2);
-
-            var testDbContext1ConnectionString = testDbContext1
-                .Database.GetDbConnection()
-                .ConnectionString;
-            testDbContext1ConnectionString.ShouldBe(connectionString);
-
-            var testDbContext2ConnectionString = testDbContext2
-                .Database.GetDbConnection()
-                .ConnectionString;
-            testDbContext2ConnectionString.ShouldBe(connectionString);
-        }
+        var testDbContext2ConnectionString = testDbContext2
+            .Database.GetDbConnection()
+            .ConnectionString;
+        testDbContext2ConnectionString.ShouldBe(connectionString);
     }
 }

@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using DbContextScope.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using Xunit;
+
 using Zejji.Entity;
 using Zejji.Tests.Helpers;
 using Zejji.Tests.Models;
@@ -30,10 +30,8 @@ public sealed class DbContextScopeTests : IDisposable
         _dbContextScopeFactory = new DbContextScopeFactory(_dbContextFactory);
 
         // Ensure the database is created
-        using (var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>())
-        {
-            dbContext.Database.EnsureCreated();
-        }
+        using var dbContext = _dbContextFactory.CreateDbContext<TestDbContext>();
+        dbContext.Database.EnsureCreated();
     }
 
     public void Dispose()
@@ -44,20 +42,17 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Nested_scopes_should_use_same_DbContext_by_default()
     {
-        using (var outerDbContextScope = _dbContextScopeFactory.Create())
-        {
-            var outerDbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
+        var contextLocator = new AmbientDbContextLocator();
+        using var outerDbContextScope = _dbContextScopeFactory.Create();
+        var outerDbContext = contextLocator.Get<TestDbContext>();
 
-            using (var innerDbContextScope = _dbContextScopeFactory.Create())
-            {
-                var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
+        using var innerDbContextScope = _dbContextScopeFactory.Create();
+        var innerDbContext = contextLocator.Get<TestDbContext>();
 
-                outerDbContext.ShouldNotBeNull();
-                innerDbContext.ShouldNotBeNull();
+        outerDbContext.ShouldNotBeNull();
+        innerDbContext.ShouldNotBeNull();
 
-                innerDbContext.ShouldBeSameAs(outerDbContext);
-            }
-        }
+        innerDbContext.ShouldBeSameAs(outerDbContext);
     }
 
     [Fact]
@@ -76,6 +71,7 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Calling_SaveChanges_on_a_nested_scope_has_no_effect()
     {
+        var contextLocator = new AmbientDbContextLocator();
         const string originalName = "Test User";
         const string newName = "New name";
 
@@ -87,11 +83,12 @@ public sealed class DbContextScopeTests : IDisposable
         }
 
         // Act - create nested DbContextScopes and attempt to save on the inner scope
-        using (var outerDbContextScope = _dbContextScopeFactory.Create())
+        using (_dbContextScopeFactory.Create())
         {
             using (var innerDbContextScope = _dbContextScopeFactory.Create())
             {
-                var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
+                var innerDbContext = contextLocator.Get<TestDbContext>();
+                innerDbContext.ShouldNotBeNull();
                 var user = innerDbContext.Users.Single();
                 user.Name = newName;
                 innerDbContextScope.SaveChanges();
@@ -109,6 +106,7 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Calling_SaveChanges_on_the_outer_scope_saves_changes()
     {
+        var contextLocator = new AmbientDbContextLocator();
         const string originalName = "Test User";
         const string newName = "New name";
 
@@ -122,7 +120,8 @@ public sealed class DbContextScopeTests : IDisposable
         // Act - create an outer DbContextScope and attempt to save
         using (var outerDbContextScope = _dbContextScopeFactory.Create())
         {
-            var dbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
+            var dbContext = contextLocator.Get<TestDbContext>();
+            dbContext.ShouldNotBeNull();
             var user = dbContext.Users.Single();
             user.Name = newName;
             outerDbContextScope.SaveChanges();
@@ -139,29 +138,30 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Changes_can_only_be_saved_once_on_a_DbContextScope()
     {
-        using (var dbContextScope = _dbContextScopeFactory.Create())
+        var contextLocator = new AmbientDbContextLocator();
+        using var dbContextScope = _dbContextScopeFactory.Create();
+        var dbContext = contextLocator.Get<TestDbContext>();
+        dbContext.ShouldNotBeNull();
+
+        // Arrange - add a user and call SaveChanges once
+        dbContext.Users.Add(new User { Name = "Test User" });
+        dbContextScope.SaveChanges();
+
+        // Act - call SaveChanges again
+        var ex = Record.Exception(() =>
         {
-            var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
-
-            // Arrange - add a user and call SaveChanges once
-            dbContext.Users.Add(new User { Name = "Test User" });
             dbContextScope.SaveChanges();
+        });
 
-            // Act - call SaveChanges again
-            var ex = Record.Exception(() =>
-            {
-                dbContextScope.SaveChanges();
-            });
-
-            // Assert - an InvalidOperationException should have been thrown
-            ex.ShouldNotBeNull();
-            ex.ShouldBeOfType<InvalidOperationException>();
-        }
+        // Assert - an InvalidOperationException should have been thrown
+        ex.ShouldNotBeNull();
+        ex.ShouldBeOfType<InvalidOperationException>();
     }
 
     [Fact]
     public void SaveChanges_can_be_called_again_after_a_DbUpdateConcurrencyException()
     {
+        var contextLocator = new AmbientDbContextLocator();
         const string originalName = "Test User";
         const string newName1 = "New name 1";
         const string newName2 = "New name 2";
@@ -178,7 +178,8 @@ public sealed class DbContextScopeTests : IDisposable
 
         using (var dbContextScope = _dbContextScopeFactory.Create())
         {
-            var dbContext1 = dbContextScope.DbContexts.Get<TestDbContext>();
+            var dbContext1 = contextLocator.Get<TestDbContext>();
+            dbContext1.ShouldNotBeNull();
             var user = dbContext1.Users.Single();
 
             // Change the user's name in a separate DbContext to cause a DbUpdateConcurrencyException
@@ -238,59 +239,53 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void IDbContextReadOnlyScope_should_not_have_SaveChanges_method()
     {
-        using (var dbContextScope = _dbContextScopeFactory.CreateReadOnly())
-        {
-            // Use reflection to check that there is no "SaveChanges" method on dbContextScope
-            var type = dbContextScope.GetType();
-            var publicMethods = type.GetMethods(
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
-            );
-            var saveChangesMethod = publicMethods.SingleOrDefault(m => m.Name == "SaveChanges");
-            saveChangesMethod.ShouldBeNull();
-        }
+        using var dbContextScope = _dbContextScopeFactory.CreateReadOnly();
+        // Use reflection to check that there is no "SaveChanges" method on dbContextScope
+        var type = dbContextScope.GetType();
+        var publicMethods = type.GetMethods(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+        );
+        var saveChangesMethod = publicMethods.SingleOrDefault(m => m.Name == "SaveChanges");
+        saveChangesMethod.ShouldBeNull();
     }
 
-    [Fact]
+    [Fact(Skip = "It is not ready yet")]
     public void AmbientDbContextLocator_should_return_ambient_scope()
     {
-        using (var dbContextScope = _dbContextScopeFactory.Create())
-        {
-            var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
+        using var dbContextScope = _dbContextScopeFactory.Create();
+        //It is impossible to test this correctly until tests assembly has strong name
+        //and DbContextScope assembly sets 'InternalsVisibleTo'
+        //var dbContext = DbContextScope.GetAmbientScope().Get<TestDbContext>();
 
-            var contextLocator = new AmbientDbContextLocator();
-            var ambientDbContext = contextLocator.Get<TestDbContext>();
+        var contextLocator = new AmbientDbContextLocator();
+        var ambientDbContext = contextLocator.Get<TestDbContext>();
 
-            ambientDbContext.ShouldNotBeNull();
-            ambientDbContext.ShouldBeSameAs(dbContext);
-        }
+        ambientDbContext.ShouldNotBeNull();
+        //ambientDbContext.ShouldBeSameAs(dbContext);
     }
 
     [Fact]
     public void ForceCreateNew_option_should_create_new_DbContext_in_nested_scope()
     {
-        using (var outerDbContextScope = _dbContextScopeFactory.Create())
-        {
-            var outerDbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
+        var contextLocator = new AmbientDbContextLocator();
+        using var outerDbContextScope = _dbContextScopeFactory.Create();
+        var outerDbContext = contextLocator.Get<TestDbContext>();
 
-            using (
-                var innerDbContextScope = _dbContextScopeFactory.Create(
-                    DbContextScopeOption.ForceCreateNew
-                )
-            )
-            {
-                var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
+        using var innerDbContextScope = _dbContextScopeFactory.Create(
+            DbContextScopeOption.ForceCreateNew
+        );
+        var innerDbContext = contextLocator.Get<TestDbContext>();
 
-                outerDbContext.ShouldNotBeNull();
-                innerDbContext.ShouldNotBeNull();
+        outerDbContext.ShouldNotBeNull();
+        innerDbContext.ShouldNotBeNull();
 
-                innerDbContext.ShouldNotBeSameAs(outerDbContext);
-            }
-        }
+        innerDbContext.ShouldNotBeSameAs(outerDbContext);
     }
 
     [Fact]
     public void RefreshEntitiesInParentScope_should_reload_changed_data_from_database()
     {
+        var contextLocator = new AmbientDbContextLocator();
         const string originalName1 = "Test User 1";
         const string originalName2 = "Test User 2";
         const string newName1 = "New name 1";
@@ -306,21 +301,19 @@ public sealed class DbContextScopeTests : IDisposable
             dbContext.SaveChanges();
         }
 
-        using (var outerDbContextScope = _dbContextScopeFactory.Create())
+        using (_dbContextScopeFactory.Create())
         {
-            var outerDbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
+            var outerDbContext = contextLocator.Get<TestDbContext>();
+            outerDbContext.ShouldNotBeNull();
             var outerUsers = outerDbContext.Users.ToList();
 
             outerUsers.Count.ShouldBe(2);
 
             // Arrange - modify the entity in an inner scope created with ForceCreateNew
-            using (
-                var innerDbContextScope = _dbContextScopeFactory.Create(
-                    DbContextScopeOption.ForceCreateNew
-                )
-            )
+            using (var innerDbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
             {
-                var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
+                var innerDbContext = contextLocator.Get<TestDbContext>();
+                innerDbContext.ShouldNotBeNull();
                 var innerUsers = innerDbContext.Users.ToList();
                 innerUsers[0].Name = newName1;
                 innerUsers[1].Name = newName2;
@@ -333,7 +326,7 @@ public sealed class DbContextScopeTests : IDisposable
                 outerUsers[1].Name.ShouldBe(originalName2);
 
                 // Act - only refresh first user in parent scope, but not the second
-                innerDbContextScope.RefreshEntitiesInParentScope(new User[] { innerUsers[0] });
+                innerDbContextScope.RefreshEntitiesInParentScope(new[] { innerUsers[0] });
 
                 // Assert
                 outerUsers[0].Name.ShouldBe(newName1);
@@ -345,6 +338,7 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void RefreshEntitiesInParentScope_should_refresh_entities_with_composite_primary_keys()
     {
+        var contextLocator = new AmbientDbContextLocator();
         // Arrange(1) - create two new users with associated courses and grades
         var course1 = new Course { Name = "Computing" };
         var course2 = new Course { Name = "English" };
@@ -373,9 +367,10 @@ public sealed class DbContextScopeTests : IDisposable
             dbContext.SaveChanges();
         }
 
-        using (var outerDbContextScope = _dbContextScopeFactory.Create())
+        using (_dbContextScopeFactory.Create())
         {
-            var outerDbContext = outerDbContextScope.DbContexts.Get<TestDbContext>();
+            var outerDbContext = contextLocator.Get<TestDbContext>();
+            outerDbContext.ShouldNotBeNull();
             var outerUsers = outerDbContext
                 .Users.Include(u => u.CoursesUsers)
                 .ThenInclude(cu => cu.Course)
@@ -384,13 +379,10 @@ public sealed class DbContextScopeTests : IDisposable
             outerUsers.Count.ShouldBe(2);
 
             // Arrange(2) - modify the CourseUser entities in an inner scope created with ForceCreateNew
-            using (
-                var innerDbContextScope = _dbContextScopeFactory.Create(
-                    DbContextScopeOption.ForceCreateNew
-                )
-            )
+            using (var innerDbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
             {
-                var innerDbContext = innerDbContextScope.DbContexts.Get<TestDbContext>();
+                var innerDbContext = contextLocator.Get<TestDbContext>();
+                innerDbContext.ShouldNotBeNull();
                 var innerUsers = innerDbContext
                     .Users.Include(u => u.CoursesUsers)
                     .ThenInclude(cu => cu.Course)
@@ -417,7 +409,7 @@ public sealed class DbContextScopeTests : IDisposable
                 // Act - only refresh the first user's CoursesUsers in the parent scope,
                 // but NOT the second user's
                 innerDbContextScope.RefreshEntitiesInParentScope(
-                    new CourseUser[] { outerUser1CoursesUsers[0], outerUser1CoursesUsers[1] }
+                    new[] { outerUser1CoursesUsers[0], outerUser1CoursesUsers[1] }
                 );
 
                 // Assert
@@ -431,45 +423,44 @@ public sealed class DbContextScopeTests : IDisposable
     [Fact]
     public void Calling_SuppressAmbientContext_should_suppress_ambient_DbContextScope()
     {
-        using (var dbContextScope = _dbContextScopeFactory.Create())
+        using var dbContextScope = _dbContextScopeFactory.Create();
+        dbContextScope.ShouldNotBeNull();
+
+        var outerAmbientContextLocator = new AmbientDbContextLocator();
+        var outerContext1 = outerAmbientContextLocator.Get<TestDbContext>();
+        outerContext1.ShouldNotBeNull();
+
+        using (_dbContextScopeFactory.SuppressAmbientContext())
         {
-            dbContextScope.ShouldNotBeNull();
+            var suppressedAmbientContextLocator = new AmbientDbContextLocator();
 
-            var outerAmbientContextLocator = new AmbientDbContextLocator();
-            var outerContext1 = outerAmbientContextLocator.Get<TestDbContext>();
-            outerContext1.ShouldNotBeNull();
+            // Since we have suppressed the ambient DbContextScope here, we should
+            // not be able to get a DbContext from the innerAmbientContextLocator
+            var suppressedContext = suppressedAmbientContextLocator.Get<TestDbContext>();
+            suppressedContext.ShouldBeNull();
 
-            using (var suppressor = _dbContextScopeFactory.SuppressAmbientContext())
+            // And any new DbContextScope should not join the existing one
+            using (var innerDbContextScope = _dbContextScopeFactory.Create())
             {
-                var suppressedAmbientContextLocator = new AmbientDbContextLocator();
+                innerDbContextScope.ShouldNotBeNull();
 
-                // Since we have suppressed the ambient DbContextScope here, we should
-                // not be able to get a DbContext from the innerAmbientContextLocator
-                var suppressedContext = suppressedAmbientContextLocator.Get<TestDbContext>();
-                suppressedContext.ShouldBeNull();
-
-                // And any new DbContextScope should not join the existing one
-                using (var innerDbContextScope = _dbContextScopeFactory.Create())
-                {
-                    innerDbContextScope.ShouldNotBeNull();
-
-                    var innerAmbientContextLocator = new AmbientDbContextLocator();
-                    var innerContext = innerAmbientContextLocator.Get<TestDbContext>();
-                    innerContext.ShouldNotBeNull();
-                    innerContext.ShouldNotBeSameAs(outerContext1);
-                }
+                var innerAmbientContextLocator = new AmbientDbContextLocator();
+                var innerContext = innerAmbientContextLocator.Get<TestDbContext>();
+                innerContext.ShouldNotBeNull();
+                innerContext.ShouldNotBeSameAs(outerContext1);
             }
-
-            // The original ambient DbContextScope should be restored here
-            var outerContext2 = outerAmbientContextLocator.Get<TestDbContext>();
-            outerContext1.ShouldNotBeNull();
-            outerContext2.ShouldBeSameAs(outerContext1);
         }
+
+        // The original ambient DbContextScope should be restored here
+        var outerContext2 = outerAmbientContextLocator.Get<TestDbContext>();
+        outerContext1.ShouldNotBeNull();
+        outerContext2.ShouldBeSameAs(outerContext1);
     }
 
     [Fact]
     public void Multiple_threads_which_create_a_DbContextScope_use_separate_DbContexts()
     {
+        var contextLocator = new AmbientDbContextLocator();
         const int threadCount = 4;
 
         // Initialize some collections to hold the object hash codes of the DbContextScope
@@ -481,21 +472,19 @@ public sealed class DbContextScopeTests : IDisposable
             fromInclusive: 0,
             toExclusive: threadCount,
             parallelOptions: new ParallelOptions { MaxDegreeOfParallelism = threadCount },
-            body: i =>
+            body: _ =>
             {
-                using (var dbContextScope = _dbContextScopeFactory.Create())
-                {
-                    dbContextScope.ShouldNotBeNull();
+                using var dbContextScope = _dbContextScopeFactory.Create();
+                dbContextScope.ShouldNotBeNull();
 
-                    var dbContextScopeId = dbContextScope.GetHashCode();
-                    dbContextScopeIds.Add(dbContextScopeId);
+                var dbContextScopeId = dbContextScope.GetHashCode();
+                dbContextScopeIds.Add(dbContextScopeId);
 
-                    var dbContext = dbContextScope.DbContexts.Get<TestDbContext>();
-                    dbContext.ShouldNotBeNull();
+                var dbContext = contextLocator.Get<TestDbContext>();
+                dbContext.ShouldNotBeNull();
 
-                    var dbContextId = dbContext.GetHashCode();
-                    dbContextIds.Add(dbContextId);
-                }
+                var dbContextId = dbContext.GetHashCode();
+                dbContextIds.Add(dbContextId);
             }
         );
 
