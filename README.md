@@ -60,7 +60,7 @@ services.AddSingleton<IAmbientDbContextLocator, AmbientDbContextLocator>();
 ```
 
 Note that we use a scoped lifetime for the `ServiceProviderDbContextFactory`, to allow scoped dependencies
-to be injected into created <see cref="DbContext"/> instances, e.g. a tenant ID accessor in a multi-tenant application
+to be injected into created `DbContext` instances, e.g. a tenant ID accessor in a multi-tenant application
 (see e.g. [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant/Docs/v9.2.0/EFCore)).
 
 If you are sure you will never need any scoped dependencies within your `DbContext` instances and know what you are doing,
