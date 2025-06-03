@@ -34,9 +34,45 @@ The `DbContextScope` library allows users to create scopes which control the lif
 
 For general usage instructions, see article referred to above and the original GitHub repository readme file (a copy of which is included in this repository [here](./ORIGINAL_README.md)). Please note the `Mehdime.Entity` namespace has been renamed to `Zejji.Entity`.
 
-The new `RegisteredDbContextFactory` class can be used as follows:
+## Getting Started
 
-- In `Startup.cs`, register a `RegisteredDbContextFactory` instance as a singleton and register one or more `DbContext` factory functions on that instance, e.g.:
+### Dependencies
+
+- .NET 6+
+- EF Core (version equal to or higher than Zejji.DbContextScope.EFCore package version)
+
+### Installing
+
+- `dotnet add package Zejji.DbContextScope.EFCore`
+
+### Dependency Injection Registrations
+
+In order to start using this library, you will need to register several dependencies with the dependency injection container.
+
+#### Standard Approach - Using the ServiceProviderDbContextFactory
+
+In most cases you will want `DbContext` instances to be constructed by the dependency injection container. You will need the following registrations:
+
+``` csharp
+services.AddScoped<IDbContextFactory, ServiceProviderDbContextFactory>();
+services.AddScoped<IDbContextScopeFactory, DbContextScopeFactory>();
+services.AddSingleton<IAmbientDbContextLocator, AmbientDbContextLocator>();
+```
+
+Note that we use a scoped lifetime for the `ServiceProviderDbContextFactory`, to allow scoped dependencies
+to be injected into created <see cref="DbContext"/> instances, e.g. a tenant ID accessor in a multi-tenant application
+(see e.g. [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant/Docs/v9.2.0/EFCore)).
+
+If you are sure you will never need any scoped dependencies within your `DbContext` instances and know what you are doing,
+it is also possible to register the `IDbContextFactory` and `IDbContextScopeFactory` with a singleton lifetime.
+
+See [here](https://github.com/zejji/DbContextScopeEFCore/issues/188) for a discussion of dependency injection lifetimes.
+
+#### Additional Customization Using the RegisteredDbContextFactory
+
+The `RegisteredDbContextFactory` class can be used in rare cases where you need more control over how `DbContext` instances are created. Usage is as follows:
+
+- In `Startup.cs`, register a `RegisteredDbContextFactory` instance and register one or more `DbContext` factory functions on that instance, e.g.:
 ``` csharp
 using Zejji.Entity;
 ...
@@ -60,17 +96,6 @@ public void ConfigureServices(IServiceCollection services)
 ```
 
 See also the unit tests for `RegisteredDbContextFactory` [here](./DbContextScope.Tests/RegisteredDbContextFactoryTests.cs).
-
-## Getting Started
-
-### Dependencies
-
-- .NET 6+
-- EF Core (version equal to or higher than Zejji.DbContextScope.EFCore package version)
-
-### Installing
-
-- `dotnet add package Zejji.DbContextScope.EFCore`
 
 ## License
 
